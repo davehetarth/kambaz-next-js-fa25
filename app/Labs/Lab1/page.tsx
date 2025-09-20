@@ -4,6 +4,9 @@ export default function Lab1() {
   return (
     <div id="wd-lab1">
       <h2>Lab 1</h2>
+      <h3>Hetarth Siddharth Dave</h3>
+      <h3>Section 04</h3>
+      <a href="https://github.com/davehetarth/kambaz-next-js-fa25/tree/Assignment-1" target="_blank"><h3>Github Repo</h3></a>
       <h3>HTML Examples</h3>
       <div id="wd-h-tag">
         <h4>Heading Tags</h4>
