@@ -1,116 +1,212 @@
+import React from "react";
+import { Container, Row, Col, Button } from "react-bootstrap";
+import {
+  FormGroup,
+  FormLabel,
+  FormControl,
+  FormCheck,
+  FormSelect,
+} from "react-bootstrap";
+
 export default function AssignmentEditor() {
+  const descriptionText = `The assignment is available online.
+
+Submit a link to the landing page of your Web application running on Netlify.
+
+The landing page should include the following:
+  • Your full name and section
+  • Links to each of the lab assignments
+  • Link to the Kanbas application
+  • Links to all relevant source code repositories
+
+The Kanbas application should include a link to navigate back to the landing page.`;
   return (
-    <div id="wd-assignments-editor">
-      <label htmlFor="wd-name"><h3>Assignment Name</h3></label> 
-      <input id="wd-name" value="A1 - ENV + HTML" /><br /><br />
-      <textarea  id="wd-description" style={{ width: '35%', height: '190px' }} >
-        The assignment is available online Submit a link to the landing page of
-        your webapplication running on netify . The landing page should include the following : your full Name
-        and section links to each of the lab assignment Link to the kanbas application Links to all relevant 
-        source code repo . The kanbas application should include a link to navigate back to the landing page .
-      </textarea>
-      <br /><br />
-      <table>
-        <tr>
-          <td align="right" valign="top">
-            <label htmlFor="wd-points">Points</label>
-          </td>
-          <td>
-                 <input id="wd-points" value={100} />
-          </td>
-        </tr><br />
-        <tr>
-            <td align="right" valign="top">
-            <label htmlFor="wd-group">Assignment Group</label>
-          </td>
-          <td>
-                <select id="wd-group">
-                  <option value="Assignments">ASSIGNMENTS</option>
-                </select>
-          </td>
-        </tr> <br />
-        <tr>
-            <td align="right" valign="top">
-            <label htmlFor="wd-display-grade-as">Display Grade as</label>
-          </td>
-          <td>
-                <select id="wd-display-grade-as">
-                  <option value="percentage">Percentage</option>
-                  <option value="marks">Marks</option>
-                </select>
-          </td>
-        </tr><br />
-        <tr>
-            <td align="right" valign="top">
-            <label htmlFor="wd-submission-type">Submission Type</label>
-          </td>
-          <td>
-                <select id="wd-submission-type">
-                  <option value="online">Online</option>
-                  <option value="offline">Ofline</option>
-                </select>
-          </td>
-        </tr><br />
-        <tr>
-            <td align="right" valign="top">
-                <div>Online Entry Options</div>
-            </td>
-            <td>
-                <input type="checkbox" name="check-genre" id="wd-text-entry"/>
-                <label htmlFor="wd-text-entry">Text Entry</label><br/>
-                <input type="checkbox" name="check-genre" id="wd-website-url"/>
-                <label htmlFor="wd-website-url">Website URL</label><br/>
-                <input type="checkbox" name="check-genre" id="wd-media-recordings"/>
-                <label htmlFor="wd-media-recordings">Media Recordings</label><br/>
-                <input type="checkbox" name="check-genre" id="wd-student-annotation"/>
-                <label htmlFor="wd-student-annotation">Studnet Annotation</label><br/>
-                <input type="checkbox" name="check-genre" id="wd-file-upload"/>
-                <label htmlFor="wd-file-upload">File uploads</label><br/>
-            </td>
-        </tr><br />
-        <tr>
-            <td align="right" valign="top">
-                <div>Assign Assign to</div>
-            </td>
-            <td>
-                <input type="text" value="Everyone" id= "wd-assign-to" />
-            </td>
-        </tr><br />
-        <tr>
-            <td align="right" valign="top">
-                Due
-            </td>
-            <td>
-                <label htmlFor="wd-due-date"></label>
-                <input type="date" value="2025-09-22" id="wd-due-date"/>
-            </td>
-        </tr> <br/>
-        <tr>
-            <td align="right" valign="top">
-                Available From
-            </td>
-            <td>
-                <label htmlFor="wd-available-from"></label>
-                <input type="date" value="2025-09-10" id="wd-available-from"/>
-            </td>
-        </tr> <br/>
-        <tr>
-            <td align="right" valign="top">
-                Until
-            </td>
-            <td>
-                <label htmlFor="wd-available-until"></label>
-                <input type="date" value="2025-09-22" id="wd-available-until"/>
-            </td>
-        </tr> <br/>
-        <tr>
-            <td align="right" valign="top">
-            </td>
-            <td>
-                <button>Cancel</button>
-                <button>Save</button>
-            </td>
-        </tr>
-      </table>
+    <div id="wd-assignments-editor" className="my-3 w-50">
+      <div>
+        <div className="mb-3">
+          <FormLabel htmlFor="wd-name" className="fw-medium">
+            Assignment Name
+          </FormLabel>
+          <FormControl type="text" id="wd-name" defaultValue="A1" />
+        </div>
+
+        <hr />
+
+        {/* Description */}
+        <FormControl
+          as="textarea"
+          className="mb-4"
+          rows={12}
+          defaultValue={descriptionText}
+        />
+
+        {/* Points, Group, Grade, Submission Type */}
+        <Row className="mb-3">
+          <FormLabel
+            column
+            sm={4}
+            className="text-end fw-medium"
+            htmlFor="wd-points"
+          >
+            Points
+          </FormLabel>
+          <Col sm={8}>
+            <FormControl type="text" value={100} id="wd-points" />
+          </Col>
+        </Row>
+
+        <Row className="mb-3">
+          <FormLabel
+            column
+            sm={4}
+            className="text-end fw-medium"
+            htmlFor="wd-group"
+          >
+            Assignment Group
+          </FormLabel>
+          <Col sm={8}>
+            <FormSelect id="wd-group">
+              <option value="Assignments">ASSIGNMENTS</option>
+            </FormSelect>
+          </Col>
+        </Row>
+
+        <Row className="mb-3">
+          <FormLabel
+            column
+            sm={4}
+            className="text-end fw-medium"
+            htmlFor="wd-display-grade-as"
+          >
+            Display Grade as
+          </FormLabel>
+          <Col sm={8}>
+            <FormSelect id="wd-display-grade-as">
+              <option value="Percentage">Percentage</option>
+              <option value="Marks">Marks</option>
+            </FormSelect>
+          </Col>
+        </Row>
+
+        <Row className="mb-3">
+          <FormLabel
+            id="wd-submission-type"
+            column
+            sm={4}
+            className="text-end fw-medium"
+          >
+            Submission Type
+          </FormLabel>
+          <Col sm={8}>
+            <div className="border p-3 rounded">
+              <FormSelect id="wd-submission-type" className="mb-3">
+                <option>Online</option>
+                <option>Offline</option>
+              </FormSelect>
+              <FormLabel className="fw-medium">Online Entry Options</FormLabel>
+              <FormCheck
+                type="checkbox"
+                label="Text Entry"
+                id="wd-text-entry"
+              />
+              <FormCheck
+                type="checkbox"
+                label="Website URL"
+                id="wd-website-url"
+                defaultChecked
+              />
+              <FormCheck
+                type="checkbox"
+                label="Media Recordings"
+                id="wd-media-recordings"
+              />
+              <FormCheck
+                type="checkbox"
+                label="Student Annotation"
+                id="wd-student-annotation"
+              />
+              <FormCheck
+                type="checkbox"
+                label="File Uploads"
+                id="wd-file-upload"
+              />
+            </div>
+          </Col>
+        </Row>
+
+        <Row className="mb-3">
+          <FormLabel column sm={4} className="text-end fw-medium">
+            Assign
+          </FormLabel>
+          <Col sm={8}>
+            <div className="border p-3 rounded">
+              <div className="mb-3">
+                <FormLabel htmlFor="wd-assign-to" className="fw-medium">
+                  Assign to
+                </FormLabel>
+                <FormControl
+                  type="text"
+                  id="wd-assign-to"
+                  defaultValue="Everyone"
+                />
+              </div>
+
+              <div className="mb-3">
+                <FormLabel htmlFor="wd-due-date" className="fw-medium">
+                  Due
+                </FormLabel>
+                <FormControl
+                  type="text"
+                  id="wd-due-date"
+                  defaultValue="05/13/2024"
+                />
+              </div>
+
+              <Row>
+                <Col>
+                  <div>
+                    <FormLabel
+                      htmlFor="wd-available-from"
+                      className="fw-medium"
+                    >
+                      Available from
+                    </FormLabel>
+                    <FormControl
+                      type="text"
+                      id="wd-available-from"
+                      defaultValue="05/06/2024"
+                    />
+                  </div>
+                </Col>
+                <Col>
+                  <div>
+                    <FormLabel
+                      htmlFor="wd-available-until"
+                      className="fw-medium"
+                    >
+                      Until
+                    </FormLabel>
+                    <FormControl
+                      type="text"
+                      id="wd-available-until"
+                      defaultValue="05/13/2024"
+                    />
+                  </div>
+                </Col>
+              </Row>
+            </div>
+          </Col>
+        </Row>
+
+        <hr className="my-4" />
+
+        <div className="d-flex justify-content-end">
+          <Button variant="light" className="me-2">
+            Cancel
+          </Button>
+          <Button variant="danger">Save</Button>
+        </div>
+      </div>
     </div>
-);}
+  );
+}
