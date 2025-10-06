@@ -13,18 +13,21 @@ export default function BootstrapNavigation() {
       <h2>Tabs</h2>
       <Nav variant="tabs">
         <NavItem>
-          <NavLink href="#/Labs/Lab2/Active">Active</NavLink>
-        </NavItem>
-        <NavItem>
-          <NavLink href="#/Labs/Lab2/Link1">Link 1</NavLink>
-        </NavItem>
-        <NavItem>
-          <NavLink href="#/Labs/Lab2/Link2">Link 2</NavLink>
-        </NavItem>
-        <NavItem>
-          <NavLink href="#/Labs/Lab2/Disabled" disabled>
-            Disabled
+          <NavLink
+            href="https://github.com/davehetarth/kambaz-next-js-fa25/tree/Assignment-2"
+            target="_blank"
+          >
+            Git Repo
           </NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink href="/Labs/Lab1">Lab 1</NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink href="/Labs/Lab2">Lab 2</NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink href="/">Kambaz</NavLink>
         </NavItem>
       </Nav>
       <div id="wd-css-navigating-with-cards">

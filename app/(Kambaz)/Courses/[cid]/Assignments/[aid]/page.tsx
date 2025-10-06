@@ -16,10 +16,10 @@ Submit a link to the landing page of your Web application running on Netlify.
 The landing page should include the following:
   • Your full name and section
   • Links to each of the lab assignments
-  • Link to the Kanbas application
+  • Link to the Kambaz application
   • Links to all relevant source code repositories
 
-The Kanbas application should include a link to navigate back to the landing page.`;
+The Kambaz application should include a link to navigate back to the landing page.`;
   return (
     <div id="wd-assignments-editor" className="my-3 w-50">
       <div>

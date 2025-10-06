@@ -22,7 +22,15 @@ import BootstrapNavigation from "./BootstrapNavigation";
 export default function Lab2() {
   return (
     <Container>
-      <h2>Lab 2 - Cascading Style Sheets</h2>
+      <h2>
+        Lab 2 - Cascading Style Sheets (Hetarth Siddharth Dave Section 04)
+      </h2>
+      <a
+        href="https://github.com/davehetarth/kambaz-next-js-fa25/tree/Assignment-2"
+        target="_blank"
+      >
+        <h3>Github Repo</h3>
+      </a>
       <h3>Styling with the STYLE attribute</h3>
       <div id="wd-css-id-selectors">
         <h3>ID selectors</h3>

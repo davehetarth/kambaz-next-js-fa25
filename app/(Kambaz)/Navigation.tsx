@@ -71,7 +71,7 @@ export default function KambazNavigation() {
       <ListGroupItem
         as={Link}
         className="bg-black text-white border-0 text-center"
-        href="/Labs/Lab1"
+        href="/Labs/Lab2"
         id="wd-labs-link"
       >
         <CiBeaker1 className="fs-1 text-danger" /> <br />
