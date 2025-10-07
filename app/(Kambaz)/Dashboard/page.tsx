@@ -16,7 +16,7 @@ export default function Dashboard() {
   return (
     <div id="wd-dashboard" className="ms-3">
       <h1 id="wd-dashboard-title">Dashboard</h1> <hr />
-      <h2 id="wd-dashboard-published">Published Courses (8)</h2> <hr />
+      <h2 id="wd-dashboard-published">Published Courses (7)</h2> <hr />
       <Row xs={1} sm={2} md={3} lg={4} xl={5} className="g-4 me-3">
         {/* Card 1 */}
         <Col>
