@@ -7,7 +7,7 @@ export default function BooleanVariables() {
   const true2 = true1 || false1;
   const true3 = !false2;
   const true4 = numberVariable === 123; // always use === not ==
-  //@ts-expect-error
+  //@ts-expect-error TS thinks this static comparison is unintentional
   const true5 = floatingPointNumber !== 321.432;
   const false3 = numberVariable < 100;
   return (
