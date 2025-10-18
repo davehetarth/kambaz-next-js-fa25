@@ -1,4 +1,6 @@
+"use client";
 import React from "react";
+import { useParams } from "next/navigation";
 import { Container, Row, Col, Button } from "react-bootstrap";
 import {
   FormGroup,
@@ -20,6 +22,7 @@ The landing page should include the following:
   • Links to all relevant source code repositories
 
 The Kambaz application should include a link to navigate back to the landing page.`;
+  const { aid } = useParams();
   return (
     <div id="wd-assignments-editor" className="my-3 w-50">
       <div>
@@ -27,7 +30,7 @@ The Kambaz application should include a link to navigate back to the landing pag
           <FormLabel htmlFor="wd-name" className="fw-medium">
             Assignment Name
           </FormLabel>
-          <FormControl type="text" id="wd-name" defaultValue="A1" />
+          <FormControl type="text" id="wd-name" defaultValue={aid} />
         </div>
 
         <hr />

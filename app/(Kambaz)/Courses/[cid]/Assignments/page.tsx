@@ -1,40 +1,18 @@
+"use client";
 import Link from "next/link";
 import AssignmentsControl from "./AssignmentsControl";
 import { ListGroup } from "react-bootstrap";
+import { useParams } from "next/navigation";
 import { ListGroupItem } from "react-bootstrap";
 import { Badge } from "react-bootstrap";
 import { FaRegEdit, FaCheckCircle, FaPlus, FaCaretDown } from "react-icons/fa";
 import { BsGripVertical, BsThreeDotsVertical } from "react-icons/bs";
+import * as db from "./../../../Database";
 import "./styles.css";
 
 export default function Assignments() {
-  const assignments = [
-    {
-      id: "A1",
-      title: "A1",
-      moduleInfo: "Multiple Modules",
-      availability: "Not available until May 6 at 12:00am",
-      dueDate: "May 13 at 11:59pm",
-      points: 100,
-    },
-    {
-      id: "A2",
-      title: "A2",
-      moduleInfo: "Multiple Modules",
-      availability: "Not available until May 13 at 12:00am",
-      dueDate: "May 20 at 11:59pm",
-      points: 100,
-    },
-    {
-      id: "A3",
-      title: "A3",
-      moduleInfo: "Multiple Modules",
-      availability: "Not available until May 20 at 12:00am",
-      dueDate: "May 27 at 11:59pm",
-      points: 100,
-    },
-  ];
-
+  const assignments = db.assignments;
+  const { cid } = useParams();
   return (
     <div id="wd-assignments">
       <AssignmentsControl /> <br /> <br /> <br />
@@ -60,32 +38,35 @@ export default function Assignments() {
         </div>
         {/* Assignments List (remains the same) */}
         <ListGroup>
-          {assignments.map((assignment) => (
-            <ListGroupItem
-              key={assignment.id}
-              className="d-flex align-items-center assignment-item p-3"
-            >
-              <BsGripVertical className="me-3" />
-              <FaRegEdit className="me-4 text-success" size={24} />
-              <div className="flex-grow-1">
-                <Link
-                  href="/Courses/1234/Assignments/123"
-                  className="fw-bold text-dark text-decoration-none"
-                >
-                  {assignment.title}
-                </Link>
-                <p className="mb-0 text-muted small">
-                  <span className="text-danger">{assignment.moduleInfo}</span> |{" "}
-                  <b>{assignment.availability}</b> |<br />
-                  <b>Due</b> {assignment.dueDate} | {assignment.points} pts
-                </p>
-              </div>
-              <div className="d-flex align-items-center">
-                <FaCheckCircle className="text-success me-3" />
-                <BsThreeDotsVertical />
-              </div>
-            </ListGroupItem>
-          ))}
+          {assignments
+            .filter((assignment: any) => assignment.course === cid)
+            .map((assignment) => (
+              <ListGroupItem
+                key={assignment._id}
+                className="d-flex align-items-center assignment-item p-3"
+              >
+                <BsGripVertical className="me-3" />
+                <FaRegEdit className="me-4 text-success" size={24} />
+                <div className="flex-grow-1">
+                  <Link
+                    // href="/Courses/1234/Assignments/123"
+                    href={`/Courses/${cid}/Assignments/${assignment._id}`}
+                    className="fw-bold text-dark text-decoration-none"
+                  >
+                    {assignment.title}
+                  </Link>
+                  <p className="mb-0 text-muted small">
+                    <span className="text-danger">Multiple Modules</span> |{" "}
+                    <b>Not available until May 6 at 12:00am</b> |<br />
+                    <b>Due</b> May 13 at 11:59pm | {100} pts
+                  </p>
+                </div>
+                <div className="d-flex align-items-center">
+                  <FaCheckCircle className="text-success me-3" />
+                  <BsThreeDotsVertical />
+                </div>
+              </ListGroupItem>
+            ))}
         </ListGroup>
       </div>
     </div>
