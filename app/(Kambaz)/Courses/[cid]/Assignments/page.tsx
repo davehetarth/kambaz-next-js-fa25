@@ -39,7 +39,7 @@ export default function Assignments() {
         {/* Assignments List (remains the same) */}
         <ListGroup>
           {assignments
-            .filter((assignment: any) => assignment.course === cid)
+            .filter((assignment) => assignment.course === cid)
             .map((assignment) => (
               <ListGroupItem
                 key={assignment._id}
