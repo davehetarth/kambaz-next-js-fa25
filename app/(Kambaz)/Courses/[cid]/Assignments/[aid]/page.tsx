@@ -1,6 +1,8 @@
 "use client";
 import React from "react";
-import { useParams } from "next/navigation";
+import Link from "next/link";
+import * as db from "../../../../Database";
+import { useParams, usePathname } from "next/navigation";
 import { Container, Row, Col, Button } from "react-bootstrap";
 import {
   FormGroup,
@@ -23,6 +25,11 @@ The landing page should include the following:
 
 The Kambaz application should include a link to navigate back to the landing page.`;
   const { aid } = useParams();
+  const path = usePathname();
+  //console.log(path);
+  const assignments = db.assignments;
+  const name = assignments.filter((assignment) => assignment._id === aid)[0];
+  const title = name.title;
   return (
     <div id="wd-assignments-editor" className="my-3 w-50">
       <div>
@@ -30,7 +37,11 @@ The Kambaz application should include a link to navigate back to the landing pag
           <FormLabel htmlFor="wd-name" className="fw-medium">
             Assignment Name
           </FormLabel>
-          <FormControl type="text" id="wd-name" defaultValue={aid} />
+          <FormControl
+            type="text"
+            id="wd-name"
+            defaultValue={`${aid} - ${title}`}
+          />
         </div>
 
         <hr />
@@ -204,10 +215,18 @@ The Kambaz application should include a link to navigate back to the landing pag
         <hr className="my-4" />
 
         <div className="d-flex justify-content-end">
-          <Button variant="light" className="me-2">
+          <Link
+            href={`../../${name.course}/Assignments`}
+            className="btn btn-light me-2"
+          >
             Cancel
-          </Button>
-          <Button variant="danger">Save</Button>
+          </Link>
+          <Link
+            href={`../../${name.course}/Assignments`}
+            className="btn btn-danger"
+          >
+            Save
+          </Link>
         </div>
       </div>
     </div>

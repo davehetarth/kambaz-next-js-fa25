@@ -24,7 +24,7 @@ export default function CourseNavigation() {
         <Link
           key={href}
           className={`list-group-item ${
-            pathname.endsWith(href) ? "active" : "text-danger border-0"
+            pathname.includes(href) ? "active" : "text-danger border-0"
           }`}
           href={`/Courses/${cid}/${href}`}
         >
