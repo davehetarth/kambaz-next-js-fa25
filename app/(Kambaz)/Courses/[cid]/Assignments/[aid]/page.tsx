@@ -35,13 +35,9 @@ The Kambaz application should include a link to navigate back to the landing pag
       <div>
         <div className="mb-3">
           <FormLabel htmlFor="wd-name" className="fw-medium">
-            Assignment Name
+            {title}
           </FormLabel>
-          <FormControl
-            type="text"
-            id="wd-name"
-            defaultValue={`${aid} - ${title}`}
-          />
+          <FormControl type="text" id="wd-name" defaultValue={`${aid}`} />
         </div>
 
         <hr />
