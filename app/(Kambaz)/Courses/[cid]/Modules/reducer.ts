@@ -31,11 +31,13 @@ const modulesSlice = createSlice({
   initialState,
   reducers: {
     addModule: (state, { payload: module }) => {
-      const newModule: any = {
+      const newModule = {
         _id: uuidv4(),
         lessons: [],
         name: module.name,
         course: module.course,
+        description: "abc",
+        editing: false,
       };
       state.modules = [...state.modules, newModule];
     },
