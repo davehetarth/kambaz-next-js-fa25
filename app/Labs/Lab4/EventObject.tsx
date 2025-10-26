@@ -1,11 +1,17 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
 export default function EventObject() {
   const [event, setEvent] = useState(null);
-  const handleClick = (e: any) => {
-    e.target = e.target.outerHTML;
-    delete e.view;
-    setEvent(e);
+  const handleClick = (e: React.MouseEvent) => {
+    const targetElement = e.target as HTMLElement;
+    const eventDetails = {
+      targetHTML: targetElement.outerHTML,
+      targetTagName: targetElement.tagName,
+      clientX: e.clientX,
+      clientY: e.clientY,
+    };
+
+    // 4. Store your new, clean object in state
   };
   return (
     <div>
