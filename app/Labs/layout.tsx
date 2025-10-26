@@ -1,3 +1,4 @@
+"use client";
 import { ReactNode } from "react";
 import TOC from "./TOC";
 import store from "./Lab4/store";
