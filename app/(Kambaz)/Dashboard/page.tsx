@@ -1,12 +1,13 @@
 "use client";
-import { v4 as uuidv4 } from "uuid";
+import { useDispatch, useSelector } from "react-redux";
+import { addNewCourse, deleteCourse, updateCourse } from "../Courses/reducer";
 import Link from "next/link";
 import { FormControl } from "react-bootstrap";
-import * as db from "../Database";
 import { useState } from "react";
 import { Card, CardImg, CardText, CardTitle, CardBody } from "react-bootstrap";
 import { Row, Col } from "react-bootstrap";
 import { Button } from "react-bootstrap";
+import { RootState } from "../store";
 export default function Dashboard() {
   interface Course {
     _id: string;
@@ -17,7 +18,8 @@ export default function Dashboard() {
     location: string;
     description: string;
   }
-  const [courses, setCourses] = useState<Course[]>(db.courses || []);
+  const { courses } = useSelector((state: RootState) => state.coursesReducer);
+  const dispatch = useDispatch();
   const [course, setCourse] = useState<Course>({
     _id: "0",
     name: "New Course",
@@ -27,25 +29,25 @@ export default function Dashboard() {
     location: "/images/reactjs.jpg",
     description: "New Description",
   });
-  const addNewCourse = () => {
-    const newCourse = { ...course, _id: uuidv4() };
-    setCourses([...courses, newCourse]);
-  };
-  const deleteCourse = (courseId: string) => {
-    setCourses(courses.filter((course) => course._id !== courseId));
-  };
+  // const addNewCourse = () => {
+  //   const newCourse = { ...course, _id: uuidv4() };
+  //   setCourses([...courses, newCourse]);
+  // };
+  // const deleteCourse = (courseId: string) => {
+  //   setCourses(courses.filter((course) => course._id !== courseId));
+  // };
 
-  const updateCourse = () => {
-    setCourses(
-      courses.map((c) => {
-        if (c._id === course._id) {
-          return course;
-        } else {
-          return c;
-        }
-      })
-    );
-  };
+  // const updateCourse = () => {
+  //   setCourses(
+  //     courses.map((c) => {
+  //       if (c._id === course._id) {
+  //         return course;
+  //       } else {
+  //         return c;
+  //       }
+  //     })
+  //   );
+  // };
 
   return (
     <div id="wd-dashboard">
@@ -55,14 +57,18 @@ export default function Dashboard() {
         <button
           className="btn btn-primary float-end"
           id="wd-add-new-course-click"
-          onClick={addNewCourse}
+          onClick={() => {
+            dispatch(addNewCourse(course));
+          }}
         >
           {" "}
           Add{" "}
         </button>
         <button
           className="btn btn-warning float-end me-2"
-          onClick={updateCourse}
+          onClick={() => {
+            dispatch(updateCourse(course));
+          }}
           id="wd-update-course-click"
         >
           Update{" "}
@@ -84,7 +90,7 @@ export default function Dashboard() {
       <hr />
       <div id="wd-dashboard-courses">
         <Row xs={1} md={5} className="g-4">
-          {courses.map((course) => (
+          {courses.map((course: Course) => (
             <Col
               key={course._id}
               className="wd-dashboard-course"
@@ -115,7 +121,7 @@ export default function Dashboard() {
                     <button
                       onClick={(event) => {
                         event.preventDefault();
-                        deleteCourse(course._id);
+                        dispatch(deleteCourse(course._id));
                       }}
                       className="btn btn-danger float-end"
                       id="wd-delete-course-click"
