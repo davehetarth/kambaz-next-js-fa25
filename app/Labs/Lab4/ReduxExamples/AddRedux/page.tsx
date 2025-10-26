@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "react-bootstrap";
 import { add } from "./addReducer";
 import { FormControl } from "react-bootstrap";
-import { RootState } from "../../store";
+import { RootState } from "../../store/index";
 
 export default function AddRedux() {
   const [a, setA] = useState(12);
