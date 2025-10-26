@@ -8,8 +8,17 @@ import { Card, CardImg, CardText, CardTitle, CardBody } from "react-bootstrap";
 import { Row, Col } from "react-bootstrap";
 import { Button } from "react-bootstrap";
 export default function Dashboard() {
-  const [courses, setCourses] = useState<any[]>(db.courses || []);
-  const [course, setCourse] = useState<any>({
+  interface Course {
+    _id: string;
+    name: string;
+    number: string;
+    startDate: string;
+    endDate: string;
+    location: string;
+    description: string;
+  }
+  const [courses, setCourses] = useState<Course[]>(db.courses || []);
+  const [course, setCourse] = useState<Course>({
     _id: "0",
     name: "New Course",
     number: "New Number",
