@@ -5,7 +5,7 @@ import { Table } from "react-bootstrap";
 import { FaUserCircle } from "react-icons/fa";
 export default function PeopleTable() {
   const { cid } = useParams();
-  const { user, enrollments } = db;
+  const { users, enrollments } = db;
   return (
     <div id="wd-people-table">
       <Table striped>
@@ -20,7 +20,7 @@ export default function PeopleTable() {
           </tr>
         </thead>
         <tbody>
-          {user
+          {users
             .filter((usr) =>
               enrollments.some(
                 (enrollment) =>
