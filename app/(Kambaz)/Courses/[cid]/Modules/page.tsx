@@ -1,7 +1,5 @@
 "use client";
-import { v4 as uuidv4 } from "uuid";
 import { useParams } from "next/navigation";
-import * as db from "../../../Database";
 import ModulesControls from "./ModulesControls";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { BsGripVertical } from "react-icons/bs";
@@ -14,71 +12,32 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../../../(Kambaz)/store";
 
 export default function Modules() {
-  interface Lesson {
-    _id: string;
-    name: string;
-    description: string;
-    module: string;
-  }
-
-  interface Module {
-    _id: string;
-    name: string;
-    course: string;
-    description: string;
-    lessons?: Lesson[];
-    editing: boolean;
-  }
-
   const { cid } = useParams();
-
-  // const [modules, setModules] = useState<Module[]>(
-  //   (db.modules || []).map((module) => ({ ...module, editing: false }))
-  // );
   const [moduleName, setModuleName] = useState("");
   const { modules } = useSelector((state: RootState) => state.modulesReducer);
   const dispatch = useDispatch();
-  // const addModule = () => {
-  //   setModules([
-  //     ...modules,
-  //     {
-  //       _id: uuidv4(),
-  //       name: moduleName,
-  //       course: cid as string,
-  //       lessons: [],
-  //       description: "abc",
-  //       editing: false,
-  //     },
-  //   ]);
-  //   setModuleName("");
-  // };
-
-  // const deleteModule = (moduleId: string) => {
-  //   setModules(modules.filter((m) => m._id !== moduleId));
-  // };
-  // const editModule = (moduleId: string) => {
-  //   setModules(
-  //     modules.map((m) => (m._id === moduleId ? { ...m, editing: true } : m))
-  //   );
-  // };
-  // const updateModule = (module: Module) => {
-  //   setModules(modules.map((m) => (m._id === module._id ? module : m)));
-  // };
-
+  const { currentUser } = useSelector(
+    (state: RootState) => state.accountReducer
+  );
+  const canEdit = currentUser?.role === "FACULTY";
   return (
     <div className="me-5">
-      <ModulesControls
-        setModuleName={setModuleName}
-        moduleName={moduleName}
-        addModule={() => {
-          dispatch(addModule({ name: moduleName, course: cid }));
-          setModuleName("");
-        }}
-      />{" "}
-      <br />
-      <br />
-      <br />
-      <br />
+      {canEdit && (
+        <>
+          <ModulesControls
+            setModuleName={setModuleName}
+            moduleName={moduleName}
+            addModule={() => {
+              dispatch(addModule({ name: moduleName, course: cid }));
+              setModuleName("");
+            }}
+          />{" "}
+          <br />
+          <br />
+          <br />
+          <br />
+        </>
+      )}
       <ListGroup className="rounded-0" id="wd-modules">
         {modules
           .filter((module) => module.course === cid)
@@ -106,13 +65,15 @@ export default function Modules() {
                     defaultValue={module.name}
                   />
                 )}
-                <ModuleControlButtons
-                  moduleId={module._id}
-                  deleteModule={(moduleId) => {
-                    dispatch(deleteModule(moduleId));
-                  }}
-                  editModule={(moduleId) => dispatch(editModule(moduleId))}
-                />
+                {canEdit && (
+                  <ModuleControlButtons
+                    moduleId={module._id}
+                    deleteModule={(moduleId) => {
+                      dispatch(deleteModule(moduleId));
+                    }}
+                    editModule={(moduleId) => dispatch(editModule(moduleId))}
+                  />
+                )}
               </div>
               {module.lessons && (
                 <ListGroup className="wd-lessons rounded-0">
@@ -122,7 +83,8 @@ export default function Modules() {
                       className="wd-lesson p-3 ps-1"
                     >
                       <BsGripVertical className="me-2 fs-3" />
-                      {lesson.name} <LessonControlButtons />
+                      {lesson.name}
+                      {canEdit && <LessonControlButtons />}
                     </ListGroupItem>
                   ))}
                 </ListGroup>

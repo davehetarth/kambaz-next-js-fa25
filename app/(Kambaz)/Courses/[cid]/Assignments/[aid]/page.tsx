@@ -1,9 +1,11 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import * as db from "../../../../Database";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { Container, Row, Col, Button } from "react-bootstrap";
+import { addAssignment, updateAssignment, deleteAssignment } from "../reducer";
+
 import {
   FormGroup,
   FormLabel,
@@ -11,31 +13,118 @@ import {
   FormCheck,
   FormSelect,
 } from "react-bootstrap";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/app/(Kambaz)/store";
+
+export interface Assignment {
+  _id: string;
+  title: string;
+  course: string;
+  description: string;
+  points: number;
+  due: string;
+  availablefrom: string;
+  availableto: string;
+  editing: boolean;
+}
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return "";
+  return dateString.split("T")[0];
+};
 
 export default function AssignmentEditor() {
-  const descriptionText = `The assignment is available online.
+  const { cid, aid } = useParams();
+  const router = useRouter();
+  const { assignments } = useSelector(
+    (state: RootState) => state.assignmentReducer
+  );
+  const { currentUser } = useSelector(
+    (state: RootState) => state.accountReducer
+  );
+  const canEdit = currentUser?.role === "FACULTY";
+  const dispatch = useDispatch();
+  const isNew = aid === "new";
+  const DEFAULT_ASSIGNMENT: Assignment = {
+    _id: "new",
+    title: "New Assignment",
+    course: cid as string,
+    description: "New Assignment Description",
+    points: 100,
+    due: new Date().toISOString().split("T")[0],
+    availablefrom: new Date().toISOString().split("T")[0],
+    availableto: new Date().toISOString().split("T")[0],
+    editing: false,
+  };
 
-Submit a link to the landing page of your Web application running on Netlify.
+  const [assignment, setAssignment] = useState<Assignment>(DEFAULT_ASSIGNMENT);
+  useEffect(() => {
+    if (isNew) {
+      if (!canEdit) {
+        router.push(`/Courses/${cid}/Assignments`);
+        return;
+      }
+      setAssignment(DEFAULT_ASSIGNMENT);
+    } else {
+      const existingAssignment = assignments.find((a) => a._id === aid);
+      if (existingAssignment) {
+        setAssignment(existingAssignment);
+      }
+    }
+  }, [aid, assignments, isNew, cid]);
 
-The landing page should include the following:
-  • Your full name and section
-  • Links to each of the lab assignments
-  • Link to the Kambaz application
-  • Links to all relevant source code repositories
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAssignment((prev) => ({ ...prev, title: e.target.value }));
+  };
+  const handleDescriptionChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    setAssignment((prev) => ({ ...prev, description: e.target.value }));
+  };
+  const handlePointsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAssignment((prev) => ({ ...prev, points: Number(e.target.value) }));
+  };
+  const handleDueDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAssignment((prev) => ({ ...prev, due: e.target.value }));
+  };
+  const handleAvailableFromChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setAssignment((prev) => ({ ...prev, availablefrom: e.target.value }));
+  };
+  const handleAvailableToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAssignment((prev) => ({ ...prev, availableto: e.target.value }));
+  };
 
-The Kambaz application should include a link to navigate back to the landing page.`;
-  const { aid } = useParams();
-  const path = usePathname();
-  //console.log(path);
-  const assignments = db.assignments;
-  const name = assignments.filter((assignment) => assignment._id === aid)[0];
-  const title = name.title;
+  const handleSave = () => {
+    if (isNew) {
+      // --- This is the part that works with your original reducer ---
+      // We must build the exact payload shape your 'addAssignment' reducer expects
+      const newAssignmentPayload = {
+        assignment: assignment.title, // 'title' from state maps to 'assignment' in payload
+        course: assignment.course,
+        points: assignment.points,
+        due: assignment.due,
+        availableto: assignment.availableto,
+        availablefrom: assignment.availablefrom,
+        // 'description' from state is NOT sent, because your reducer would ignore it
+      };
+      dispatch(addAssignment(newAssignmentPayload));
+      // ---------------------------------------------------------------
+    } else {
+      // 'updateAssignment' reducer expects the full assignment object, which we have.
+      dispatch(updateAssignment(assignment));
+    }
+    // Navigate back to the assignments list
+    router.push(`/Courses/${cid}/Assignments`);
+  };
+
   return (
     <div id="wd-assignments-editor" className="my-3 w-50">
       <div>
         <div className="mb-3">
           <FormLabel htmlFor="wd-name" className="fw-medium">
-            {title}
+            Assignment Name
           </FormLabel>
           <FormControl type="text" id="wd-name" defaultValue={`${aid}`} />
         </div>
@@ -46,8 +135,10 @@ The Kambaz application should include a link to navigate back to the landing pag
         <FormControl
           as="textarea"
           className="mb-4"
-          rows={12}
-          defaultValue={descriptionText}
+          rows={6}
+          value={assignment.description}
+          onChange={handleDescriptionChange}
+          readOnly={!canEdit}
         />
 
         {/* Points, Group, Grade, Submission Type */}
@@ -61,7 +152,13 @@ The Kambaz application should include a link to navigate back to the landing pag
             Points
           </FormLabel>
           <Col sm={8}>
-            <FormControl type="text" value={100} id="wd-points" />
+            <FormControl
+              type="number"
+              value={assignment.points}
+              id="wd-points"
+              onChange={handlePointsChange}
+              readOnly={!canEdit}
+            />
           </Col>
         </Row>
 
@@ -75,7 +172,7 @@ The Kambaz application should include a link to navigate back to the landing pag
             Assignment Group
           </FormLabel>
           <Col sm={8}>
-            <FormSelect id="wd-group">
+            <FormSelect id="wd-group" disabled={!canEdit}>
               <option value="Assignments">ASSIGNMENTS</option>
             </FormSelect>
           </Col>
@@ -91,7 +188,7 @@ The Kambaz application should include a link to navigate back to the landing pag
             Display Grade as
           </FormLabel>
           <Col sm={8}>
-            <FormSelect id="wd-display-grade-as">
+            <FormSelect id="wd-display-grade-as" disabled={!canEdit}>
               <option value="Percentage">Percentage</option>
               <option value="Marks">Marks</option>
             </FormSelect>
@@ -109,7 +206,11 @@ The Kambaz application should include a link to navigate back to the landing pag
           </FormLabel>
           <Col sm={8}>
             <div className="border p-3 rounded">
-              <FormSelect id="wd-submission-type" className="mb-3">
+              <FormSelect
+                id="wd-submission-type"
+                className="mb-3"
+                disabled={!canEdit}
+              >
                 <option>Online</option>
                 <option>Offline</option>
               </FormSelect>
@@ -118,27 +219,32 @@ The Kambaz application should include a link to navigate back to the landing pag
                 type="checkbox"
                 label="Text Entry"
                 id="wd-text-entry"
+                disabled={!canEdit}
               />
               <FormCheck
                 type="checkbox"
                 label="Website URL"
                 id="wd-website-url"
                 defaultChecked
+                disabled={!canEdit}
               />
               <FormCheck
                 type="checkbox"
                 label="Media Recordings"
                 id="wd-media-recordings"
+                disabled={!canEdit}
               />
               <FormCheck
                 type="checkbox"
                 label="Student Annotation"
                 id="wd-student-annotation"
+                disabled={!canEdit}
               />
               <FormCheck
                 type="checkbox"
                 label="File Uploads"
                 id="wd-file-upload"
+                disabled={!canEdit}
               />
             </div>
           </Col>
@@ -158,6 +264,7 @@ The Kambaz application should include a link to navigate back to the landing pag
                   type="text"
                   id="wd-assign-to"
                   defaultValue="Everyone"
+                  readOnly={!canEdit}
                 />
               </div>
 
@@ -166,9 +273,11 @@ The Kambaz application should include a link to navigate back to the landing pag
                   Due
                 </FormLabel>
                 <FormControl
-                  type="text"
+                  type="date"
                   id="wd-due-date"
-                  defaultValue="05/13/2024"
+                  value={formatDate(assignment.due)}
+                  onChange={handleDueDateChange}
+                  readOnly={!canEdit}
                 />
               </div>
 
@@ -182,9 +291,11 @@ The Kambaz application should include a link to navigate back to the landing pag
                       Available from
                     </FormLabel>
                     <FormControl
-                      type="text"
+                      type="date"
                       id="wd-available-from"
-                      defaultValue="05/06/2024"
+                      value={formatDate(assignment.availablefrom)}
+                      onChange={handleAvailableFromChange}
+                      readOnly={!canEdit}
                     />
                   </div>
                 </Col>
@@ -197,9 +308,11 @@ The Kambaz application should include a link to navigate back to the landing pag
                       Until
                     </FormLabel>
                     <FormControl
-                      type="text"
+                      type="date"
                       id="wd-available-until"
-                      defaultValue="05/13/2024"
+                      value={formatDate(assignment.availableto)}
+                      onChange={handleAvailableToChange}
+                      readOnly={!canEdit}
                     />
                   </div>
                 </Col>
@@ -212,17 +325,16 @@ The Kambaz application should include a link to navigate back to the landing pag
 
         <div className="d-flex justify-content-end">
           <Link
-            href={`../../${name.course}/Assignments`}
+            href={`../../${cid}/Assignments`}
             className="btn btn-light me-2"
           >
             Cancel
           </Link>
-          <Link
-            href={`../../${name.course}/Assignments`}
-            className="btn btn-danger"
-          >
-            Save
-          </Link>
+          {canEdit && (
+            <Button variant="danger" onClick={handleSave}>
+              Save
+            </Button>
+          )}
         </div>
       </div>
     </div>

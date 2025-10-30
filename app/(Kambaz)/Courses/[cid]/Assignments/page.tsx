@@ -4,15 +4,32 @@ import AssignmentsControl from "./AssignmentsControl";
 import { ListGroup } from "react-bootstrap";
 import { useParams } from "next/navigation";
 import { ListGroupItem } from "react-bootstrap";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/app/(Kambaz)/store";
 import { Badge } from "react-bootstrap";
 import { FaRegEdit, FaCheckCircle, FaPlus, FaCaretDown } from "react-icons/fa";
 import { BsGripVertical, BsThreeDotsVertical } from "react-icons/bs";
-import * as db from "./../../../Database";
+import { deleteAssignment } from "./reducer";
+import { Button } from "react-bootstrap";
+import { FaTrash } from "react-icons/fa";
 import "./styles.css";
 
 export default function Assignments() {
-  const assignments = db.assignments;
+  const { assignments } = useSelector(
+    (state: RootState) => state.assignmentReducer
+  );
   const { cid } = useParams();
+  const dispatch = useDispatch();
+  const { currentUser } = useSelector(
+    (state: RootState) => state.accountReducer
+  );
+  const canEdit = currentUser?.role === "FACULTY";
+  const handleDeleteAssignment = (assignmentId: string) => {
+    if (window.confirm("Are you sure you want to remove this assignment?")) {
+      dispatch(deleteAssignment(assignmentId));
+    }
+  };
+
   return (
     <div id="wd-assignments">
       <AssignmentsControl /> <br /> <br /> <br />
@@ -28,12 +45,11 @@ export default function Assignments() {
             <Badge bg="secondary" className="me-2 fs-6 text-dark">
               40% of Total
             </Badge>
-            <button className="btn">
-              <FaPlus />
-            </button>
-            <button className="btn">
-              <BsThreeDotsVertical />
-            </button>
+            {canEdit && (
+              <button className="btn">
+                <BsThreeDotsVertical />
+              </button>
+            )}
           </div>
         </div>
         {/* Assignments List (remains the same) */}
@@ -49,21 +65,36 @@ export default function Assignments() {
                 <FaRegEdit className="me-4 text-success" size={24} />
                 <div className="flex-grow-1">
                   <Link
-                    // href="/Courses/1234/Assignments/123"
                     href={`/Courses/${cid}/Assignments/${assignment._id}`}
                     className="fw-bold text-dark text-decoration-none"
                   >
                     {assignment.title}
                   </Link>
+
                   <p className="mb-0 text-muted small">
                     <span className="text-danger">Multiple Modules</span> |{" "}
-                    <b>Not available until May 6 at 12:00am</b> |<br />
-                    <b>Due</b> May 13 at 11:59pm | {100} pts
+                    <b>
+                      Not available until{" "}
+                      {assignment.availablefrom.split("T")[0]}
+                    </b>{" "}
+                    |<br />
+                    <b>Due</b> {assignment.due.split("T")[0]} |{" "}
+                    {assignment.points} pts
                   </p>
                 </div>
                 <div className="d-flex align-items-center">
                   <FaCheckCircle className="text-success me-3" />
-                  <BsThreeDotsVertical />
+                  {canEdit && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => handleDeleteAssignment(assignment._id)}
+                    >
+                      <FaTrash />
+                    </Button>
+                  )}
+                  {canEdit && <BsThreeDotsVertical />}
                 </div>
               </ListGroupItem>
             ))}

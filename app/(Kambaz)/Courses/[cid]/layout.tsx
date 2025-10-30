@@ -8,7 +8,7 @@ import Breadcrumb from "./Breadcrumb";
 import { useSelector } from "react-redux";
 import { useParams } from "next/navigation";
 export default function CoursesLayout({ children }: { children: ReactNode }) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const { cid } = useParams();
   const { courses } = useSelector((state: RootState) => state.coursesReducer);
   const course = courses.find((course) => course._id === cid);

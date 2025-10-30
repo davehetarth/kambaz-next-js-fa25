@@ -1,7 +1,16 @@
 import { Button, InputGroup, Form } from "react-bootstrap";
 import { FaPlus } from "react-icons/fa6";
 import { FaSearch } from "react-icons/fa";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useSelector } from "react-redux";
+import { RootState } from "@/app/(Kambaz)/store";
 export default function AssignmentsControl() {
+  const { cid } = useParams();
+  const { currentUser } = useSelector(
+    (state: RootState) => state.accountReducer
+  );
+  const canEdit = currentUser?.role === "FACULTY";
   return (
     <div
       id="wd-modules-controls"
@@ -28,12 +37,19 @@ export default function AssignmentsControl() {
           }}
         />
       </div>
-      <Button variant="secondary" size="lg" className="me-2 ms-auto">
-        <FaPlus className="me-1" /> Group
-      </Button>
-      <Button variant="danger" size="lg">
-        <FaPlus className="me-1" /> Assignment
-      </Button>
+      {canEdit && (
+        <>
+          <Button variant="secondary" size="lg" className="me-2 ms-auto">
+            <FaPlus className="me-1" /> Group
+          </Button>
+          <Link
+            href={`/Courses/${cid}/Assignments/new`}
+            className="btn btn-danger btn-lg" // Use bootstrap classes to style the Link as a Button
+          >
+            <FaPlus className="me-1" /> Assignment
+          </Link>
+        </>
+      )}
     </div>
   );
 }
