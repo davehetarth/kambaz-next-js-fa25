@@ -1,147 +1,128 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import * as db from "../../../../Database";
-import { useParams, usePathname, useRouter } from "next/navigation";
-import { Container, Row, Col, Button } from "react-bootstrap";
-import { addAssignment, updateAssignment, deleteAssignment } from "../reducer";
-
-import {
-  FormGroup,
-  FormLabel,
-  FormControl,
-  FormCheck,
-  FormSelect,
-} from "react-bootstrap";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "@/app/(Kambaz)/store";
-
-export interface Assignment {
-  _id: string;
-  title: string;
-  course: string;
-  description: string;
-  points: number;
-  due: string;
-  availablefrom: string;
-  availableto: string;
-  editing: boolean;
-}
-
-const formatDate = (dateString: string) => {
-  if (!dateString) return "";
-  return dateString.split("T")[0];
-};
+import { RootState } from "../../../../store";
+import * as client from "../../../../Courses/client";
+import {
+  addAssignment,
+  updateAssignment,
+  setAssignment,
+  setAssignments, // Import setAssignments
+  resetAssignment,
+} from "../reducer";
+import {
+  Button,
+  Form,
+  FormControl,
+  Row,
+  Col,
+  FormLabel,
+  FormSelect,
+  FormCheck,
+} from "react-bootstrap";
+import Link from "next/link";
 
 export default function AssignmentEditor() {
   const { cid, aid } = useParams();
   const router = useRouter();
+  const dispatch = useDispatch();
+
+  const { assignment } = useSelector(
+    (state: RootState) => state.assignmentReducer
+  );
   const { assignments } = useSelector(
     (state: RootState) => state.assignmentReducer
   );
+  // Get currentUser to determine edit permissions
   const { currentUser } = useSelector(
     (state: RootState) => state.accountReducer
   );
   const canEdit = currentUser?.role === "FACULTY";
-  const dispatch = useDispatch();
-  const isNew = aid === "new";
-  const DEFAULT_ASSIGNMENT: Assignment = {
-    _id: "new",
-    title: "New Assignment",
-    course: cid as string,
-    description: "New Assignment Description",
-    points: 100,
-    due: new Date().toISOString().split("T")[0],
-    availablefrom: new Date().toISOString().split("T")[0],
-    availableto: new Date().toISOString().split("T")[0],
-    editing: false,
-  };
 
-  const [assignment, setAssignment] = useState<Assignment>(DEFAULT_ASSIGNMENT);
+  // Load the assignment from Redux into local state for editing
+  const [localAssignment, setLocalAssignment] = useState(assignment);
+
+  const fetchAssignments = async () => {
+    if (cid && assignments.length === 0) {
+      const assignments = await client.findAssignmentsForCourse(cid as string);
+      dispatch(setAssignments(assignments));
+    }
+  };
   useEffect(() => {
-    if (isNew) {
-      if (!canEdit) {
-        router.push(`/Courses/${cid}/Assignments`);
-        return;
-      }
-      setAssignment(DEFAULT_ASSIGNMENT);
+    fetchAssignments();
+  }, [cid, assignments.length, dispatch]);
+
+  useEffect(() => {
+    if (aid === "new") {
+      dispatch(resetAssignment());
     } else {
-      const existingAssignment = assignments.find((a) => a._id === aid);
-      if (existingAssignment) {
-        setAssignment(existingAssignment);
+      const foundAssignment = assignments.find((a) => a._id === aid);
+      if (foundAssignment) {
+        dispatch(setAssignment(foundAssignment));
       }
     }
-  }, [aid, assignments, isNew, cid]);
+  }, [aid, assignments, dispatch]);
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAssignment((prev) => ({ ...prev, title: e.target.value }));
-  };
-  const handleDescriptionChange = (
-    e: React.ChangeEvent<HTMLTextAreaElement>
-  ) => {
-    setAssignment((prev) => ({ ...prev, description: e.target.value }));
-  };
-  const handlePointsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAssignment((prev) => ({ ...prev, points: Number(e.target.value) }));
-  };
-  const handleDueDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAssignment((prev) => ({ ...prev, due: e.target.value }));
-  };
-  const handleAvailableFromChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setAssignment((prev) => ({ ...prev, availablefrom: e.target.value }));
-  };
-  const handleAvailableToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAssignment((prev) => ({ ...prev, availableto: e.target.value }));
+  useEffect(() => {
+    setLocalAssignment(assignment);
+  }, [assignment]);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    return dateString.split("T")[0];
   };
 
-  const handleSave = () => {
-    if (isNew) {
-      // --- This is the part that works with your original reducer ---
-      // We must build the exact payload shape your 'addAssignment' reducer expects
-      const newAssignmentPayload = {
-        assignment: assignment.title, // 'title' from state maps to 'assignment' in payload
-        course: assignment.course,
-        points: assignment.points,
-        due: assignment.due,
-        availableto: assignment.availableto,
-        availablefrom: assignment.availablefrom,
-        // 'description' from state is NOT sent, because your reducer would ignore it
-      };
-      dispatch(addAssignment(newAssignmentPayload));
-      // ---------------------------------------------------------------
-    } else {
-      // 'updateAssignment' reducer expects the full assignment object, which we have.
-      dispatch(updateAssignment(assignment));
+  const handleSave = async () => {
+    try {
+      if (aid === "new") {
+        const newAssignment = await client.createAssignment(
+          cid as string,
+          localAssignment
+        );
+        dispatch(addAssignment(newAssignment));
+      } else {
+        const updatedAssignment = await client.updateAssignment(
+          localAssignment
+        );
+        dispatch(updateAssignment(updatedAssignment));
+      }
+      router.push(`/Courses/${cid}/Assignments`);
+    } catch (err) {
+      console.error("Failed to save assignment", err);
     }
-    // Navigate back to the assignments list
-    router.push(`/Courses/${cid}/Assignments`);
   };
 
   return (
-    <div id="wd-assignments-editor" className="my-3 w-50">
-      <div>
-        <div className="mb-3">
-          <FormLabel htmlFor="wd-name" className="fw-medium">
-            Assignment Name
-          </FormLabel>
-          <FormControl type="text" id="wd-name" defaultValue={`${aid}`} />
-        </div>
+    <div className="me-5">
+      <Form>
+        <Form.Group className="mb-3">
+          <Form.Label>Assignment Title</Form.Label>
+          <FormControl
+            value={localAssignment.title}
+            readOnly={!canEdit}
+            onChange={(e) =>
+              setLocalAssignment({ ...localAssignment, title: e.target.value })
+            }
+          />
+        </Form.Group>
 
-        <hr />
+        <Form.Group className="mb-3">
+          <Form.Label>Description</Form.Label>
+          <FormControl
+            as="textarea"
+            rows={5}
+            readOnly={!canEdit}
+            value={localAssignment.description}
+            onChange={(e) =>
+              setLocalAssignment({
+                ...localAssignment,
+                description: e.target.value,
+              })
+            }
+          />
+        </Form.Group>
 
-        {/* Description */}
-        <FormControl
-          as="textarea"
-          className="mb-4"
-          rows={6}
-          value={assignment.description}
-          onChange={handleDescriptionChange}
-          readOnly={!canEdit}
-        />
-
-        {/* Points, Group, Grade, Submission Type */}
         <Row className="mb-3">
           <FormLabel
             column
@@ -154,10 +135,15 @@ export default function AssignmentEditor() {
           <Col sm={8}>
             <FormControl
               type="number"
-              value={assignment.points}
+              value={localAssignment.points}
               id="wd-points"
-              onChange={handlePointsChange}
               readOnly={!canEdit}
+              onChange={(e) =>
+                setLocalAssignment({
+                  ...localAssignment,
+                  points: Number(e.target.value),
+                })
+              }
             />
           </Col>
         </Row>
@@ -275,9 +261,14 @@ export default function AssignmentEditor() {
                 <FormControl
                   type="date"
                   id="wd-due-date"
-                  value={formatDate(assignment.due)}
-                  onChange={handleDueDateChange}
                   readOnly={!canEdit}
+                  value={formatDate(localAssignment.due)}
+                  onChange={(e) =>
+                    setLocalAssignment({
+                      ...localAssignment,
+                      due: e.target.value,
+                    })
+                  }
                 />
               </div>
 
@@ -293,9 +284,14 @@ export default function AssignmentEditor() {
                     <FormControl
                       type="date"
                       id="wd-available-from"
-                      value={formatDate(assignment.availablefrom)}
-                      onChange={handleAvailableFromChange}
                       readOnly={!canEdit}
+                      value={formatDate(localAssignment.availablefrom)}
+                      onChange={(e) =>
+                        setLocalAssignment({
+                          ...localAssignment,
+                          availablefrom: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 </Col>
@@ -310,9 +306,14 @@ export default function AssignmentEditor() {
                     <FormControl
                       type="date"
                       id="wd-available-until"
-                      value={formatDate(assignment.availableto)}
-                      onChange={handleAvailableToChange}
                       readOnly={!canEdit}
+                      value={formatDate(localAssignment.availableto)}
+                      onChange={(e) =>
+                        setLocalAssignment({
+                          ...localAssignment,
+                          availableto: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 </Col>
@@ -320,22 +321,18 @@ export default function AssignmentEditor() {
             </div>
           </Col>
         </Row>
-
-        <hr className="my-4" />
-
-        <div className="d-flex justify-content-end">
-          <Link
-            href={`../../${cid}/Assignments`}
-            className="btn btn-light me-2"
-          >
-            Cancel
-          </Link>
-          {canEdit && (
-            <Button variant="danger" onClick={handleSave}>
-              Save
-            </Button>
-          )}
-        </div>
+      </Form>
+      <hr />
+      <div className="d-flex justify-content-end">
+        <Link
+          href={`/Courses/${cid}/Assignments`}
+          className="btn btn-secondary me-2"
+        >
+          Cancel
+        </Link>
+        <Button onClick={handleSave} variant="danger" disabled={!canEdit}>
+          Save
+        </Button>
       </div>
     </div>
   );

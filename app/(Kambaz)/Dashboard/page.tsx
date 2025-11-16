@@ -1,16 +1,23 @@
 "use client";
 import { useDispatch, useSelector } from "react-redux";
-import { addNewCourse, deleteCourse, updateCourse } from "../Courses/reducer";
+import {
+  addNewCourse,
+  deleteCourse,
+  updateCourse,
+  setCourses,
+} from "../Courses/reducer";
 import Link from "next/link";
-import * as db from "../Database";
 import { FormControl } from "react-bootstrap";
 import { useState } from "react";
 import { Card, CardImg, CardText, CardTitle, CardBody } from "react-bootstrap";
 import { Row, Col } from "react-bootstrap";
 import { Button } from "react-bootstrap";
 import { RootState } from "../store";
-import { enroll, unenroll } from "./reducer";
+// 1. Import the new enrollment reducers
+import { setEnrollments, addEnrollment, removeEnrollment } from "./reducer";
 import { useRouter } from "next/navigation";
+import * as client from "../Courses/client";
+import { useEffect } from "react";
 
 export default function Dashboard() {
   interface Course {
@@ -26,10 +33,10 @@ export default function Dashboard() {
     (state: RootState) => state.accountReducer
   );
   const router = useRouter();
+  // 2. Get enrollments from the new reducer
   const { enrollments } = useSelector(
     (state: RootState) => state.enrollmentReducer
   );
-  const [showAllCourses, setShowAllCourses] = useState(false);
   const { courses } = useSelector((state: RootState) => state.coursesReducer);
   const dispatch = useDispatch();
   const [course, setCourse] = useState<Course>({
@@ -44,49 +51,97 @@ export default function Dashboard() {
 
   const canEdit = currentUser?.role === "FACULTY";
 
-  const isEnrolled = (courseId: string) => {
-    if (!currentUser) return false;
-    return enrollments.some(
-      (e) => e.user === currentUser._id && e.course === courseId
-    );
-  };
-
-  const handleEnroll = (event: React.MouseEvent, courseId: string) => {
-    event.stopPropagation();
-    event.preventDefault();
-    if (!currentUser) return;
-    dispatch(enroll({ userId: currentUser._id, courseId: courseId }));
-  };
-
-  const handleUnenroll = (event: React.MouseEvent, courseId: string) => {
-    event.stopPropagation();
-    event.preventDefault();
-    if (!currentUser) return;
-    dispatch(unenroll({ userId: currentUser._id, courseId: courseId }));
-  };
-
-  const handleNavigate = (event: React.MouseEvent, courseId: string) => {
-    if (!isEnrolled(courseId)) {
-      event.preventDefault();
-      alert("You must be enrolled in this course to view it.");
+  // 3. New function to fetch all courses
+  const fetchCourses = async () => {
+    try {
+      // Fetches ALL courses, not just enrolled ones
+      const courses = await client.fetchAllCourses();
+      dispatch(setCourses(courses));
+    } catch (error) {
+      console.error(error);
     }
   };
 
-  const coursesToShow = showAllCourses
-    ? courses
-    : courses.filter((course) => isEnrolled(course._id));
+  // 4. New function to fetch enrollments for the current user
+  const fetchEnrollments = async () => {
+    if (currentUser) {
+      try {
+        const enrollments = await client.findMyEnrollments();
+        dispatch(setEnrollments(enrollments));
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  };
+
+  // 5. useEffect to fetch both on load (or user change)
+  useEffect(() => {
+    fetchCourses();
+    fetchEnrollments();
+  }, [currentUser]);
+
+  // 6. New function to check enrollment status
+  const isEnrolled = (courseId: string) => {
+    return enrollments.some((e) => e.course === courseId);
+  };
+
+  // 7. Make handleEnroll persistent
+  const handleEnroll = async (event: React.MouseEvent, courseId: string) => {
+    event.stopPropagation();
+    event.preventDefault();
+    if (!currentUser) return;
+    try {
+      const newEnrollment = await client.enrollInCourse(courseId);
+      dispatch(addEnrollment(newEnrollment));
+    } catch (error) {
+      console.error("Failed to enroll", error);
+    }
+  };
+
+  // 8. Make handleUnenroll persistent
+  const handleUnenroll = async (event: React.MouseEvent, courseId: string) => {
+    event.stopPropagation();
+    event.preventDefault();
+    if (!currentUser) return;
+    try {
+      await client.unenrollFromCourse(courseId);
+      dispatch(removeEnrollment(courseId)); // Dispatch with courseId
+    } catch (error) {
+      console.error("Failed to unenroll", error);
+    }
+  };
+
+  // --- 9. THIS IS THE SECURITY FIX ---
+  const handleNavigate = (event: React.MouseEvent, courseId: string) => {
+    if (currentUser?.role === "STUDENT" && !isEnrolled(courseId)) {
+      // If user is a STUDENT and NOT enrolled, prevent navigation
+      event.preventDefault();
+      alert("You must be enrolled in this course to view it.");
+    }
+    // Faculty can navigate to any course
+    // Enrolled students can navigate
+  };
+  // ------------------------------------------
+
+  // 10. Fix Add/Delete/Update to use the correct reducers
+  const onAddNewCourse = async () => {
+    const newCourse = await client.createCourse(course);
+    dispatch(addNewCourse(newCourse)); // Use addNewCourse
+  };
+
+  const onDeleteCourse = async (courseId: string) => {
+    await client.deleteCourse(courseId);
+    dispatch(deleteCourse(courseId)); // Use deleteCourse
+  };
+
+  const onUpdateCourse = async () => {
+    await client.updateCourse(course);
+    dispatch(updateCourse(course)); // Use updateCourse
+  };
 
   return (
     <div id="wd-dashboard">
       <h1 id="wd-dashboard-title">Dashboard</h1> <hr />
-      <Button
-        variant="primary"
-        className="float-end"
-        style={{ marginTop: "-50px" }}
-        onClick={() => setShowAllCourses(!showAllCourses)}
-      >
-        {showAllCourses ? "My Enrollments" : "Show All Courses"}
-      </Button>
       <hr />
       {canEdit && (
         <>
@@ -95,21 +150,16 @@ export default function Dashboard() {
             <button
               className="btn btn-primary float-end"
               id="wd-add-new-course-click"
-              onClick={() => {
-                dispatch(addNewCourse(course));
-              }}
+              onClick={onAddNewCourse}
             >
-              {" "}
-              Add{" "}
+              Add
             </button>
             <button
               className="btn btn-warning float-end me-2"
-              onClick={() => {
-                dispatch(updateCourse(course));
-              }}
+              onClick={onUpdateCourse}
               id="wd-update-course-click"
             >
-              Update{" "}
+              Update
             </button>
           </h5>
           <br />
@@ -131,7 +181,7 @@ export default function Dashboard() {
       <h2 id="wd-dashboard-published">Published Courses</h2> <hr />
       <div id="wd-dashboard-courses">
         <Row xs={1} md={5} className="g-4">
-          {coursesToShow.map((course: Course) => (
+          {courses.map((course: Course) => (
             <Col
               key={course._id}
               className="wd-dashboard-course"
@@ -141,6 +191,7 @@ export default function Dashboard() {
                 <Link
                   href={`/Courses/${course._id}/Home`}
                   className="wd-dashboard-course-link text-decoration-none text-dark"
+                  // --- 11. ADD onClick HANDLER TO THE LINK ---
                   onClick={(e) => handleNavigate(e, course._id)}
                 >
                   <CardImg
@@ -159,9 +210,9 @@ export default function Dashboard() {
                     >
                       {course.description}
                     </CardText>
-                    {/* --- New Enroll/Unenroll Buttons --- */}
                     <div className="d-flex justify-content-between align-items-center">
                       <div>
+                        {/* 12. Conditionally show Enroll/Unenroll */}
                         {isEnrolled(course._id) ? (
                           <Button
                             variant="danger"
@@ -181,16 +232,14 @@ export default function Dashboard() {
                             Enroll
                           </Button>
                         )}
-                        <Button variant="primary">Go</Button>
                       </div>
                       {canEdit && (
                         <div>
                           <Button
                             onClick={(event) => {
                               event.preventDefault();
-                              dispatch(deleteCourse(course._id));
+                              onDeleteCourse(course._id);
                             }}
-                            // className="btn btn-danger float-end"
                             id="wd-delete-course-click"
                             className="me-1"
                             variant="danger"
@@ -205,7 +254,6 @@ export default function Dashboard() {
                               event.preventDefault();
                               setCourse(course);
                             }}
-                            // className="btn btn-warning me-2 float-end"
                             size="sm"
                           >
                             Edit

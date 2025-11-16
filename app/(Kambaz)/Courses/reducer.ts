@@ -30,6 +30,10 @@ const coursesSlice = createSlice({
   initialState,
   reducers: {
     // 5. Add types to your action payloads
+    setCourses: (state, action: PayloadAction<Course[]>) => {
+      // The payload is a complete array of courses
+      state.courses = action.payload;
+    },
     addNewCourse: (state, action: PayloadAction<Course>) => {
       // The user is passing in the 'new course' form object
       const course = action.payload;
@@ -50,6 +54,6 @@ const coursesSlice = createSlice({
     },
   },
 });
-export const { addNewCourse, deleteCourse, updateCourse } =
+export const { addNewCourse, deleteCourse, updateCourse, setCourses } =
   coursesSlice.actions;
 export default coursesSlice.reducer;

@@ -2,16 +2,18 @@
 import Link from "next/link";
 import AssignmentsControl from "./AssignmentsControl";
 import { ListGroup } from "react-bootstrap";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ListGroupItem } from "react-bootstrap";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/app/(Kambaz)/store";
 import { Badge } from "react-bootstrap";
 import { FaRegEdit, FaCheckCircle, FaPlus, FaCaretDown } from "react-icons/fa";
 import { BsGripVertical, BsThreeDotsVertical } from "react-icons/bs";
-import { deleteAssignment } from "./reducer";
+import { deleteAssignment, setAssignments } from "./reducer";
 import { Button } from "react-bootstrap";
-import { FaTrash } from "react-icons/fa";
+import { FaTrash, FaPencilAlt } from "react-icons/fa";
+import { useEffect } from "react";
+import * as client from "./../../../Courses/client";
 import "./styles.css";
 
 export default function Assignments() {
@@ -20,13 +22,28 @@ export default function Assignments() {
   );
   const { cid } = useParams();
   const dispatch = useDispatch();
+  const router = useRouter();
   const { currentUser } = useSelector(
     (state: RootState) => state.accountReducer
   );
   const canEdit = currentUser?.role === "FACULTY";
-  const handleDeleteAssignment = (assignmentId: string) => {
+  const fetchAssignments = async () => {
+    if (cid) {
+      const assignments = await client.findAssignmentsForCourse(cid as string);
+      dispatch(setAssignments(assignments));
+    }
+  };
+  useEffect(() => {
+    fetchAssignments();
+  }, [cid]);
+  const handleDeleteAssignment = async (assignmentId: string) => {
     if (window.confirm("Are you sure you want to remove this assignment?")) {
-      dispatch(deleteAssignment(assignmentId));
+      try {
+        await client.deleteAssignment(assignmentId);
+        dispatch(deleteAssignment(assignmentId));
+      } catch (err) {
+        console.error("Failed to delete assignment", err);
+      }
     }
   };
 
@@ -55,7 +72,7 @@ export default function Assignments() {
         {/* Assignments List (remains the same) */}
         <ListGroup>
           {assignments
-            .filter((assignment) => assignment.course === cid)
+            // .filter((assignment) => assignment.course === cid)
             .map((assignment) => (
               <ListGroupItem
                 key={assignment._id}
@@ -94,7 +111,23 @@ export default function Assignments() {
                       <FaTrash />
                     </Button>
                   )}
-                  {canEdit && <BsThreeDotsVertical />}
+                  {canEdit && (
+                    <div>
+                      <Button
+                        variant="warning"
+                        size="sm"
+                        className="me-2"
+                        onClick={() =>
+                          router.push(
+                            `/Courses/${cid}/Assignments/${assignment._id}`
+                          )
+                        }
+                      >
+                        <FaPencilAlt />
+                      </Button>
+                      <BsThreeDotsVertical />
+                    </div>
+                  )}
                 </div>
               </ListGroupItem>
             ))}
