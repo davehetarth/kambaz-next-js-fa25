@@ -9,7 +9,7 @@ export default function AccountNavigation() {
   const { currentUser } = useSelector(
     (state: RootState) => state.accountReducer
   );
-  const links = currentUser ? ["Profile"] : ["Singin", "Signup"];
+  const links = currentUser ? ["Profile"] : ["Signin", "Signup"];
   const pathname = usePathname();
   return (
     <div id="wd-account-navigation">
