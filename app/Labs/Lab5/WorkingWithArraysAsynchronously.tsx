@@ -15,12 +15,33 @@ interface Todo {
   editing: boolean; // This is client-side only
 }
 
+interface ApiError {
+  response: {
+    data: {
+      message: string;
+    };
+  };
+}
+
+function isApiError(error: unknown): error is ApiError {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof (error as ApiError).response === "object" &&
+    (error as ApiError).response !== null &&
+    "data" in (error as ApiError).response &&
+    typeof (error as ApiError).response.data === "object" &&
+    (error as ApiError).response.data !== null &&
+    "message" in (error as ApiError).response.data
+  );
+}
+
 export default function WorkingWithArraysAsynchronously() {
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [errorMessage, setErrorMessage] = useState(null); // Fetches the initial list
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fetchTodos = async () => {
     const todos = await client.fetchTodos();
-    // Add 'editing: false' to each todo as client-side state
     setTodos((todos || []).map((todo: Todo) => ({ ...todo, editing: false })));
   };
 
@@ -42,22 +63,35 @@ export default function WorkingWithArraysAsynchronously() {
   };
 
   // --- Delete Functions ---
-  const updateTodo = async (todo: any) => {
+  const updateTodo = async (todo: Todo) => {
     try {
       await client.updateTodo(todo);
       setTodos(todos.map((t) => (t.id === todo.id ? todo : t)));
-    } catch (error: any) {
-      setErrorMessage(error.response.data.message);
+    } catch (error: unknown) {
+      if (isApiError(error)) {
+        setErrorMessage(error.response.data.message);
+      } else if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("An unknown error occurred.");
+      }
     }
   };
-  const deleteTodo = async (todo: any) => {
+  const deleteTodo = async (todo: Todo) => {
     try {
       await client.deleteTodo(todo);
       const newTodos = todos.filter((t) => t.id !== todo.id);
       setTodos(newTodos);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // 7. FIX: Changed 'any' to 'unknown'
       console.log(error);
-      setErrorMessage(error.response.data.message);
+      if (isApiError(error)) {
+        setErrorMessage(error.response.data.message);
+      } else if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("An unknown error occurred.");
+      }
     }
   };
 

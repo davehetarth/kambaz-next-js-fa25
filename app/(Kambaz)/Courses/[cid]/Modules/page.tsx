@@ -19,6 +19,21 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../../../(Kambaz)/store";
 import { useEffect } from "react";
 
+interface Lesson {
+  _id: string;
+  name: string;
+  description: string;
+  module: string;
+}
+
+export interface Module {
+  _id: string;
+  name: string;
+  course: string;
+  editing?: boolean; // Added by the reducer, so make it optional
+  lessons?: Lesson[]; // Not all modules may have lessons
+}
+
 export default function Modules() {
   const fetchModules = async () => {
     const modules = await client.findModulesForCourse(cid as string);
@@ -35,19 +50,19 @@ export default function Modules() {
   const onCreateModuleForCourse = async () => {
     if (cid && typeof cid === "string") {
       const newModule = { name: moduleName, course: cid };
-      const module = await client.createModuleForCourse(cid, newModule);
-      dispatch(setModules([...modules, module]));
+      const createdModule = await client.createModuleForCourse(cid, newModule);
+      dispatch(setModules([...modules, createdModule]));
     }
   };
 
   const onRemoveModule = async (moduleId: string) => {
     await client.deleteModule(moduleId);
-    dispatch(setModules(modules.filter((m: any) => m._id !== moduleId)));
+    dispatch(setModules(modules.filter((m: Module) => m._id !== moduleId)));
   };
 
-  const onUpdateModule = async (module: any) => {
+  const onUpdateModule = async (module: Module) => {
     await client.updateModule(module);
-    const newModules = modules.map((m: any) =>
+    const newModules = modules.map((m: Module) =>
       m._id === module._id ? module : m
     );
     dispatch(setModules(newModules));
