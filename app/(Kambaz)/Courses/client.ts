@@ -67,12 +67,12 @@ export const createCourse = async (
   return data;
 };
 
-export const deleteCourse = async (id: string): Promise<any> => {
+export const deleteCourse = async (id: string): Promise<unknown> => {
   const { data } = await axios.delete(`${COURSES_API}/${id}`);
   return data;
 };
 
-export const updateCourse = async (course: Course): Promise<any> => {
+export const updateCourse = async (course: Course): Promise<Course> => {
   const { data } = await axios.put(`${COURSES_API}/${course._id}`, course);
   return data;
 };
@@ -100,7 +100,7 @@ export const deleteModule = async (moduleId: string) => {
   return response.data;
 };
 
-export const updateModule = async (module: Module): Promise<any> => {
+export const updateModule = async (module: Module): Promise<Module> => {
   const { data } = await axios.put(`${MODULES_API}/${module._id}`, module);
   return data;
 };
@@ -136,7 +136,7 @@ export const deleteAssignment = async (assignmentId: string) => {
  */
 export const updateAssignment = async (
   assignment: Assignment
-): Promise<any> => {
+): Promise<Assignment> => {
   const response = await axios.put(
     `${ASSIGNMENTS_API}/${assignment._id}`,
     assignment
