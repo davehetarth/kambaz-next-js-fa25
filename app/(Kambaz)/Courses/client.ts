@@ -7,7 +7,7 @@ const ASSIGNMENTS_API = `${HTTP_SERVER}/api/assignments`;
 
 const COURSES_API = `${HTTP_SERVER}/api/courses`;
 
-interface Course {
+export interface Course {
   _id: string;
   name: string;
   number: string;

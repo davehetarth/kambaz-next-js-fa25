@@ -17,18 +17,10 @@ import { RootState } from "../store";
 import { setEnrollments, addEnrollment, removeEnrollment } from "./reducer";
 import { useRouter } from "next/navigation";
 import * as client from "../Courses/client";
+import { Course } from "../Courses/client";
 import { useEffect } from "react";
 
 export default function Dashboard() {
-  interface Course {
-    _id: string;
-    name: string;
-    number: string;
-    startDate: string;
-    endDate: string;
-    location: string;
-    description: string;
-  }
   const { currentUser } = useSelector(
     (state: RootState) => state.accountReducer
   );
@@ -47,6 +39,8 @@ export default function Dashboard() {
     endDate: "2023-12-15",
     location: "/images/reactjs.jpg",
     description: "New Description",
+    department: "New Dept", // <-- ADD THIS
+    credits: 3,
   });
 
   const canEdit = currentUser?.role === "FACULTY";
@@ -181,7 +175,7 @@ export default function Dashboard() {
       <h2 id="wd-dashboard-published">Published Courses</h2> <hr />
       <div id="wd-dashboard-courses">
         <Row xs={1} md={5} className="g-4">
-          {courses.map((course: Course) => (
+          {courses.map((course) => (
             <Col
               key={course._id}
               className="wd-dashboard-course"
