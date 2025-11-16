@@ -21,7 +21,7 @@ export interface User {
   loginId: string;
   section: string;
   lastActivity: string;
-  totalActivity: string;
+  totalActivity: string; //sad
 }
 
 export const signin = async (credentials: Credentials) => {
