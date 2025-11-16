@@ -224,7 +224,7 @@ export default function Dashboard() {
                             size="sm"
                           >
                             Enroll
-                          </Button>
+                          </Button> // new comment
                         )}
                       </div>
                       {canEdit && (
