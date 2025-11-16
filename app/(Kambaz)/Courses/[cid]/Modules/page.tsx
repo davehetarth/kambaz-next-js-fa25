@@ -30,6 +30,7 @@ export interface Module {
   _id: string;
   name: string;
   course: string;
+  description: string;
   editing?: boolean; // Added by the reducer, so make it optional
   lessons?: Lesson[]; // Not all modules may have lessons
 }
