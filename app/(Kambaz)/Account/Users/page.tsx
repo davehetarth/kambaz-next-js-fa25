@@ -6,13 +6,18 @@ import { FormControl } from "react-bootstrap";
 import * as client from "../client";
 import { FaPlus } from "react-icons/fa";
 
+// Synchronized interface from PeopleDetails.tsx
 interface User {
   _id: string;
+  username: string;
+  password: string;
   firstName: string;
   lastName: string;
+  email: string;
+  dob: string;
+  role: string;
   loginId: string;
   section: string;
-  role: string;
   lastActivity: string;
   totalActivity: string;
 }
@@ -20,6 +25,7 @@ interface User {
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [role, setRole] = useState("");
+
   const filterUsersByRole = async (role: string) => {
     setRole(role);
     if (role) {
@@ -29,9 +35,14 @@ export default function Users() {
       fetchUsers();
     }
   };
+
   const [name, setName] = useState("");
+
   const createUser = async () => {
-    const user = await client.createUser({
+    // FIX: newUser object now includes ALL properties required by the User interface,
+    // ensuring TypeScript does not throw an 'Object literal may only specify known properties' error.
+    const newUser: User = {
+      _id: "", // Temporary value, MongoDB server will overwrite this
       firstName: "New",
       lastName: `User${users.length + 1}`,
       username: `newuser${Date.now()}`,
@@ -39,7 +50,15 @@ export default function Users() {
       email: `email${users.length + 1}@neu.edu`,
       section: "S101",
       role: "STUDENT",
-    });
+
+      // Mandatory empty fields to satisfy the interface:
+      dob: "",
+      loginId: `newuserlogin${Date.now()}`,
+      lastActivity: "",
+      totalActivity: "",
+    };
+
+    const user = await client.createUser(newUser);
     setUsers([...users, user]);
   };
 
@@ -54,13 +73,16 @@ export default function Users() {
   };
 
   const { uid } = useParams();
+
   const fetchUsers = async () => {
     const users = await client.findAllUsers();
     setUsers(users);
   };
+
   useEffect(() => {
     fetchUsers();
-  }, [uid]);
+  }, []);
+
   return (
     <div>
       <h3>Users</h3>

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Table } from "react-bootstrap";
 import { FaUserCircle, FaTimes } from "react-icons/fa";
-import PeopleDetails from "../Details"; // Assuming this path is correct
+import PeopleDetails from "../Details";
 import Link from "next/link";
 
 interface User {
@@ -62,6 +62,7 @@ export default function PeopleTable({
                 setShowDetails(false); // 1. Hide the details component
                 fetchUsers(); // 2. Refresh the users list
               }}
+              fetchUsers={fetchUsers}
             />
           </div>
         </div>
