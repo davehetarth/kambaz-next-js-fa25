@@ -1,44 +1,89 @@
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import * as client from "../../../Account/client";
 import { FaPencil } from "react-icons/fa6";
 import { FaCheck, FaUserCircle } from "react-icons/fa";
 import { FormControl } from "react-bootstrap";
+import * as client from "../../../Account/client";
+
+export interface User {
+  _id: string;
+  username: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  dob: string;
+  role: string;
+  loginId: string;
+  section: string;
+  lastActivity: string;
+  totalActivity: string; //sad
+}
 
 export default function PeopleDetails({
   uid,
   onClose,
+  fetchUsers, // <-- REQUIRED: Must be passed from parent
 }: {
   uid: string | null;
   onClose: () => void;
+  fetchUsers: () => void; // <-- Type definition added
 }) {
-  const [user, setUser] = useState<any>({});
+  // FIX: Initialize with null to satisfy TypeScript
+  const [user, setUser] = useState<User | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
-  const deleteUser = async (uid: string) => {
-    await client.deleteUser(uid);
-    onClose();
-  };
   const [name, setName] = useState("");
   const [editing, setEditing] = useState(false);
+
+  // ------------------------------------
+  // DELETE USER LOGIC
+  // ------------------------------------
+  const deleteUser = async (userId: string) => {
+    await client.deleteUser(userId);
+    onClose();
+    fetchUsers(); // Refresh parent component
+  };
+
+  // ------------------------------------
+  // SAVE USER LOGIC - FIX IS HERE
+  // ------------------------------------
   const saveUser = async () => {
-    const [firstName, lastName] = name.split(" ");
-    const updatedUser = { ...user, firstName, lastName };
+    if (!user || !name) return;
+
+    const nameParts = name.split(/\s+/);
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(" ") || "";
+
+    // FIX: Explicitly cast the object as User to resolve 'not assignable' error on setUser
+    const updatedUser: User = {
+      ...user,
+      firstName,
+      lastName,
+      _id: user._id,
+    };
+
     await client.updateUser(updatedUser);
+
     setUser(updatedUser);
     setEditing(false);
     onClose();
+    fetchUsers();
   };
 
+  // ------------------------------------
+  // FETCH USER LOGIC
+  // ------------------------------------
   const fetchUser = async () => {
     if (!uid) {
-      setUser({});
+      setUser(null);
       setIsLoading(false);
       return;
     }
     setIsLoading(true);
-    const user = await client.findUserById(uid);
-    setUser(user);
+    const fetchedUser: User = await client.findUserById(uid);
+
+    setUser(fetchedUser);
+    setName(`${fetchedUser.firstName} ${fetchedUser.lastName}`);
     setIsLoading(false);
   };
 
@@ -46,13 +91,15 @@ export default function PeopleDetails({
     fetchUser();
   }, [uid]);
 
-  if (!uid || isLoading) {
+  if (!uid || isLoading || !user) {
     return (
       <div className="p-4 text-center text-muted">
         {isLoading ? "Loading user details..." : "Select a user"}
       </div>
     );
   }
+
+  const userId = uid;
 
   return (
     <div className="wd-people-details p-2">
@@ -65,23 +112,29 @@ export default function PeopleDetails({
           <FaPencil
             onClick={() => setEditing(true)}
             className="float-end fs-5 mt-2 wd-edit"
+            style={{ cursor: "pointer" }}
           />
         )}
         {editing && (
           <FaCheck
-            onClick={() => saveUser()}
+            onClick={saveUser}
             className="float-end fs-5 mt-2 me-2 wd-save"
+            style={{ cursor: "pointer" }}
           />
         )}
         {!editing && (
-          <div className="wd-name" onClick={() => setEditing(true)}>
+          <div
+            className="wd-name"
+            onClick={() => setEditing(true)}
+            style={{ cursor: "pointer" }}
+          >
             {user.firstName} {user.lastName}
           </div>
         )}
-        {user && editing && (
+        {editing && (
           <FormControl
             className="w-50 wd-edit-name"
-            defaultValue={`${user.firstName} ${user.lastName}`}
+            value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -99,7 +152,7 @@ export default function PeopleDetails({
       <b>Total Activity:</b>{" "}
       <span className="wd-total-activity">{user.totalActivity}</span> <hr />
       <button
-        onClick={() => deleteUser(uid)}
+        onClick={() => deleteUser(userId)}
         className="btn btn-danger float-end wd-delete"
       >
         {" "}
