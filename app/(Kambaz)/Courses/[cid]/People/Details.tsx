@@ -12,6 +12,9 @@ interface User {
   firstName: string;
   lastName: string;
   username: string;
+  password?: string; // Made optional
+  email?: string; // Made optional
+  dob?: string; // Made optional
   loginId: string;
   section: string;
   role: string;

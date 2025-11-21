@@ -37,7 +37,7 @@ export const signup = async (user: Partial<User>) => {
   return response.data;
 };
 
-export const updateUser = async (user: User) => {
+export const updateUser = async (user: Partial<User>) => {
   const response = await axiosWithCredentials.put(
     `${USERS_API}/${user._id}`,
     user
