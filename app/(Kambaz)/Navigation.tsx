@@ -9,11 +9,11 @@ import { ListGroup, ListGroupItem } from "react-bootstrap";
 export default function KambazNavigation() {
   const pathname = usePathname();
   const links = [
-    { label: "Dashboard", path: "/Dashboard", icon: MdDashboard },
-    { label: "Courses", path: "/Dashboard", icon: FaBook },
-    { label: "Calendar", path: "/Calendar", icon: FaRegCalendarAlt },
-    { label: "Inbox", path: "/Inbox", icon: MdMoveToInbox },
-    { label: "Labs", path: "/Labs", icon: CiBeaker1 },
+    { id: 1, label: "Dashboard", path: "/Dashboard", icon: MdDashboard },
+    { id: 2, label: "Courses", path: "/Dashboard", icon: FaBook },
+    { id: 3, label: "Calendar", path: "/Calendar", icon: FaRegCalendarAlt },
+    { id: 4, label: "Inbox", path: "/Inbox", icon: MdMoveToInbox },
+    { id: 5, label: "Labs", path: "/Labs", icon: CiBeaker1 },
   ];
 
   return (
@@ -53,7 +53,7 @@ export default function KambazNavigation() {
       </ListGroupItem>
       {links.map((link) => (
         <ListGroupItem
-          key={link.path}
+          key={link.id}
           as={Link}
           href={link.path}
           className={`bg-black text-center border-0 ${
