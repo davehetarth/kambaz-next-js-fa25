@@ -6,26 +6,32 @@ import {
   updateCourse,
   setCourses,
 } from "../Courses/reducer";
+import { setCurrentUser } from "../Users/reducer";
 import Link from "next/link";
-import { FormControl } from "react-bootstrap";
-import { useState } from "react";
-import { Card, CardImg, CardText, CardTitle, CardBody } from "react-bootstrap";
-import { Row, Col } from "react-bootstrap";
-import { Button } from "react-bootstrap";
+import {
+  FormControl,
+  Card,
+  CardImg,
+  CardText,
+  CardTitle,
+  CardBody,
+  Row,
+  Col,
+  Button,
+} from "react-bootstrap";
+import { useState, useEffect } from "react";
 import { RootState } from "../store";
-// 1. Import the new enrollment reducers
 import { setEnrollments, addEnrollment, removeEnrollment } from "./reducer";
 import { useRouter } from "next/navigation";
 import * as client from "../Courses/client";
+import * as userClient from "../Users/client";
 import { Course } from "../Courses/client";
-import { useEffect } from "react";
 
 export default function Dashboard() {
   const { currentUser } = useSelector(
     (state: RootState) => state.accountReducer
   );
   const router = useRouter();
-  // 2. Get enrollments from the new reducer
   const { enrollments } = useSelector(
     (state: RootState) => state.enrollmentReducer
   );
@@ -39,16 +45,25 @@ export default function Dashboard() {
     endDate: "2023-12-15",
     location: "/images/reactjs.jpg",
     description: "New Description",
-    department: "New Dept", // <-- ADD THIS
+    department: "New Dept",
     credits: 3,
   });
 
   const canEdit = currentUser?.role === "FACULTY";
 
-  // 3. New function to fetch all courses
+  const checkSession = async () => {
+    try {
+      if (!currentUser) {
+        const profile = await userClient.profile();
+        dispatch(setCurrentUser(profile));
+      }
+    } catch (error) {
+      // User is not logged in
+    }
+  };
+
   const fetchCourses = async () => {
     try {
-      // Fetches ALL courses, not just enrolled ones
       const courses = await client.fetchAllCourses();
       dispatch(setCourses(courses));
     } catch (error) {
@@ -56,7 +71,6 @@ export default function Dashboard() {
     }
   };
 
-  // 4. New function to fetch enrollments for the current user
   const fetchEnrollments = async () => {
     if (currentUser) {
       try {
@@ -68,82 +82,89 @@ export default function Dashboard() {
     }
   };
 
-  // 5. useEffect to fetch both on load (or user change)
   useEffect(() => {
+    checkSession();
     fetchCourses();
-    fetchEnrollments();
+  }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchEnrollments();
+    }
   }, [currentUser]);
 
-  // 6. New function to check enrollment status
   const isEnrolled = (courseId: string) => {
-    return enrollments.some((e) => e.course === courseId);
+    if (enrollments) {
+      return enrollments.some((enrollment: any) => {
+        if (enrollment._id === courseId) return true;
+        if (enrollment.course === courseId) return true;
+        return false;
+      });
+    }
+    return false;
   };
 
-  // 7. Make handleEnroll persistent
   const handleEnroll = async (event: React.MouseEvent, courseId: string) => {
     event.stopPropagation();
     event.preventDefault();
     if (!currentUser) return;
     try {
-      const newEnrollment = await client.enrollInCourse(courseId);
+      // FIX: Capture the object returned by the server.
+      // The server generates the '_id', which satisfies the TypeScript interface.
+      const newEnrollment = await client.enrollIntoCourse(
+        currentUser._id,
+        courseId
+      );
+
       dispatch(addEnrollment(newEnrollment));
     } catch (error) {
       console.error("Failed to enroll", error);
     }
   };
 
-  // 8. Make handleUnenroll persistent
   const handleUnenroll = async (event: React.MouseEvent, courseId: string) => {
     event.stopPropagation();
     event.preventDefault();
     if (!currentUser) return;
     try {
-      await client.unenrollFromCourse(courseId);
-      dispatch(removeEnrollment(courseId)); // Dispatch with courseId
+      await client.unenrollFromCourse(currentUser._id, courseId);
+      dispatch(removeEnrollment(courseId));
     } catch (error) {
       console.error("Failed to unenroll", error);
     }
   };
 
-  // --- 9. THIS IS THE SECURITY FIX ---
   const handleNavigate = (event: React.MouseEvent, courseId: string) => {
     if (currentUser?.role === "STUDENT" && !isEnrolled(courseId)) {
-      // If user is a STUDENT and NOT enrolled, prevent navigation
       event.preventDefault();
       alert("You must be enrolled in this course to view it.");
     }
-    // Faculty can navigate to any course
-    // Enrolled students can navigate
   };
-  // ------------------------------------------
 
-  // 10. Fix Add/Delete/Update to use the correct reducers
   const onAddNewCourse = async () => {
     const newCourse = await client.createCourse(course);
-    dispatch(addNewCourse(newCourse)); // Use addNewCourse
+    dispatch(addNewCourse(newCourse));
   };
 
   const onDeleteCourse = async (courseId: string) => {
     await client.deleteCourse(courseId);
-    dispatch(deleteCourse(courseId)); // Use deleteCourse
+    dispatch(deleteCourse(courseId));
   };
 
   const onUpdateCourse = async () => {
     await client.updateCourse(course);
-    dispatch(updateCourse(course)); // Use updateCourse
+    dispatch(updateCourse(course));
   };
 
   return (
     <div id="wd-dashboard">
       <h1 id="wd-dashboard-title">Dashboard</h1> <hr />
-      <hr />
       {canEdit && (
         <>
           <h5>
             New Course
             <button
               className="btn btn-primary float-end"
-              id="wd-add-new-course-click"
               onClick={onAddNewCourse}
             >
               Add
@@ -151,7 +172,6 @@ export default function Dashboard() {
             <button
               className="btn btn-warning float-end me-2"
               onClick={onUpdateCourse}
-              id="wd-update-course-click"
             >
               Update
             </button>
@@ -185,17 +205,16 @@ export default function Dashboard() {
                 <Link
                   href={`/Courses/${course._id}/Home`}
                   className="wd-dashboard-course-link text-decoration-none text-dark"
-                  // --- 11. ADD onClick HANDLER TO THE LINK ---
                   onClick={(e) => handleNavigate(e, course._id)}
                 >
                   <CardImg
-                    src={`${course.location}`}
+                    src={course.location || "/images/reactjs.jpg"}
                     variant="top"
                     width="100%"
                     height={160}
                   />
                   <CardBody className="card-body">
-                    <CardTitle className="wd-dashboard-course-title text-norap overflow-hidden">
+                    <CardTitle className="wd-dashboard-course-title text-nowrap overflow-hidden">
                       {course.name}
                     </CardTitle>
                     <CardText
@@ -206,7 +225,6 @@ export default function Dashboard() {
                     </CardText>
                     <div className="d-flex justify-content-between align-items-center">
                       <div>
-                        {/* 12. Conditionally show Enroll/Unenroll */}
                         {isEnrolled(course._id) ? (
                           <Button
                             variant="danger"
@@ -224,7 +242,7 @@ export default function Dashboard() {
                             size="sm"
                           >
                             Enroll
-                          </Button> // new comment
+                          </Button>
                         )}
                       </div>
                       {canEdit && (
@@ -234,7 +252,6 @@ export default function Dashboard() {
                               event.preventDefault();
                               onDeleteCourse(course._id);
                             }}
-                            id="wd-delete-course-click"
                             className="me-1"
                             variant="danger"
                             size="sm"
@@ -242,7 +259,6 @@ export default function Dashboard() {
                             Delete
                           </Button>
                           <Button
-                            id="wd-edit-course-click"
                             variant="warning"
                             onClick={(event) => {
                               event.preventDefault();
