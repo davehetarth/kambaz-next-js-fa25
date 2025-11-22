@@ -27,17 +27,22 @@ import * as client from "../Courses/client";
 import * as userClient from "../Users/client";
 import { Course } from "../Courses/client";
 
+// 1. Define a flexible interface to avoid 'any'
+interface EnrollmentCheck {
+  _id: string; // Present in Course objects
+  course?: string; // Present in Enrollment objects (optional)
+}
+
 export default function Dashboard() {
   const { currentUser } = useSelector(
     (state: RootState) => state.accountReducer
   );
+  const router = useRouter();
   const { enrollments } = useSelector(
     (state: RootState) => state.enrollmentReducer
   );
   const { courses } = useSelector((state: RootState) => state.coursesReducer);
   const dispatch = useDispatch();
-  const router = useRouter();
-
   const [course, setCourse] = useState<Course>({
     _id: "0",
     name: "New Course",
@@ -94,17 +99,20 @@ export default function Dashboard() {
     }
   }, [currentUser]);
 
-  // FIX: Use 'any' here to allow checking properties of both Course and Enrollment objects without errors
+  // 2. FIX: Use the Interface. Logic checks existence of 'course' property.
   const isEnrolled = (courseId: string) => {
     if (enrollments) {
-      return enrollments.some((enrollment: any) => {
-        // Check if it is a Course Object (from database fetch)
-        if (enrollment._id === courseId) return true;
+      // Cast to our common interface to satisfy TypeScript
+      const list = enrollments as EnrollmentCheck[];
 
-        // Check if it is an Enrollment Object (recently added)
-        if (enrollment.course === courseId) return true;
-
-        return false;
+      return list.some((enrollment) => {
+        if (enrollment.course) {
+          // If 'course' property exists, it's an Enrollment object
+          return enrollment.course === courseId;
+        } else {
+          // Otherwise, it's a Course object, so check _id
+          return enrollment._id === courseId;
+        }
       });
     }
     return false;
@@ -115,7 +123,6 @@ export default function Dashboard() {
     event.preventDefault();
     if (!currentUser) return;
     try {
-      // Capture the object returned by the server (it has the correct _id)
       const newEnrollment = await client.enrollIntoCourse(
         currentUser._id,
         courseId
@@ -218,7 +225,7 @@ export default function Dashboard() {
                     height={160}
                   />
                   <CardBody className="card-body">
-                    <CardTitle className="wd-dashboard-course-title text-nowrap overflow-hidden">
+                    <CardTitle className="wd-dashboard-course-title text-norap overflow-hidden">
                       {course.name}
                     </CardTitle>
                     <CardText
