@@ -31,12 +31,13 @@ export default function Dashboard() {
   const { currentUser } = useSelector(
     (state: RootState) => state.accountReducer
   );
-  const router = useRouter();
   const { enrollments } = useSelector(
     (state: RootState) => state.enrollmentReducer
   );
   const { courses } = useSelector((state: RootState) => state.coursesReducer);
   const dispatch = useDispatch();
+  const router = useRouter();
+
   const [course, setCourse] = useState<Course>({
     _id: "0",
     name: "New Course",
@@ -93,11 +94,16 @@ export default function Dashboard() {
     }
   }, [currentUser]);
 
+  // FIX: Use 'any' here to allow checking properties of both Course and Enrollment objects without errors
   const isEnrolled = (courseId: string) => {
     if (enrollments) {
       return enrollments.some((enrollment: any) => {
+        // Check if it is a Course Object (from database fetch)
         if (enrollment._id === courseId) return true;
+
+        // Check if it is an Enrollment Object (recently added)
         if (enrollment.course === courseId) return true;
+
         return false;
       });
     }
@@ -109,13 +115,11 @@ export default function Dashboard() {
     event.preventDefault();
     if (!currentUser) return;
     try {
-      // FIX: Capture the object returned by the server.
-      // The server generates the '_id', which satisfies the TypeScript interface.
+      // Capture the object returned by the server (it has the correct _id)
       const newEnrollment = await client.enrollIntoCourse(
         currentUser._id,
         courseId
       );
-
       dispatch(addEnrollment(newEnrollment));
     } catch (error) {
       console.error("Failed to enroll", error);
