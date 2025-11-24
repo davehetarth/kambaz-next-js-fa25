@@ -1,12 +1,15 @@
 "use client";
 import { useParams } from "next/navigation";
-import * as db from "../../../../Database";
+// REMOVED unused and incorrect DB import for a client component:
+// import * as db from "../../../../Database";
 import { useState, useEffect } from "react";
 import { Table } from "react-bootstrap";
 import { FaUserCircle } from "react-icons/fa";
 import PeopleDetails from "../Details";
 import Link from "next/link";
-interface User {
+
+// Ensure this interface is exported so the parent page can use it if needed
+export interface User {
   _id: string;
   firstName: string;
   lastName: string;
@@ -17,6 +20,7 @@ interface User {
   lastActivity: string;
   totalActivity: string;
 }
+
 export default function PeopleTable({
   users = [],
   fetchUsers,
@@ -33,6 +37,7 @@ export default function PeopleTable({
           uid={showUserId}
           onClose={() => {
             setShowDetails(false);
+            // This will now call the parent's fetchUsersForCourse function
             fetchUsers();
           }}
         />
@@ -54,6 +59,7 @@ export default function PeopleTable({
               <td className="wd-full-name text-nowrap">
                 <span
                   className="text-decoration-none"
+                  style={{ cursor: "pointer" }} // Added cursor pointer for better UX
                   onClick={() => {
                     setShowDetails(true);
                     setShowUserId(user._id);

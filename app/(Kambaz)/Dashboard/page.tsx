@@ -27,7 +27,7 @@ import * as client from "../Courses/client";
 import * as userClient from "../Users/client";
 import { Course } from "../Courses/client";
 
-// 1. Define a flexible interface to avoid 'any'
+// Define a flexible interface to avoid 'any' for mixed enrollment state
 interface EnrollmentCheck {
   _id: string; // Present in Course objects
   course?: string; // Present in Enrollment objects (optional)
@@ -38,10 +38,14 @@ export default function Dashboard() {
     (state: RootState) => state.accountReducer
   );
   const router = useRouter();
-  const { enrollments } = useSelector(
+  // Default enrollments to an empty array to avoid errors before fetch completes
+  const { enrollments = [] } = useSelector(
     (state: RootState) => state.enrollmentReducer
   );
-  const { courses } = useSelector((state: RootState) => state.coursesReducer);
+  // Default courses to an empty array
+  const { courses = [] } = useSelector(
+    (state: RootState) => state.coursesReducer
+  );
   const dispatch = useDispatch();
   const [course, setCourse] = useState<Course>({
     _id: "0",
@@ -55,7 +59,9 @@ export default function Dashboard() {
     credits: 3,
   });
 
+  // Helpers for roles
   const canEdit = currentUser?.role === "FACULTY";
+  const isStudent = currentUser?.role === "STUDENT";
 
   const checkSession = async () => {
     try {
@@ -80,8 +86,8 @@ export default function Dashboard() {
   const fetchEnrollments = async () => {
     if (currentUser) {
       try {
-        const enrollments = await client.findMyEnrollments();
-        dispatch(setEnrollments(enrollments));
+        const fetchedEnrollments = await client.findMyEnrollments();
+        dispatch(setEnrollments(fetchedEnrollments));
       } catch (error) {
         console.error(error);
       }
@@ -99,23 +105,24 @@ export default function Dashboard() {
     }
   }, [currentUser]);
 
-  // 2. FIX: Use the Interface. Logic checks existence of 'course' property.
-  const isEnrolled = (courseId: string) => {
-    if (enrollments) {
-      // Cast to our common interface to satisfy TypeScript
-      const list = enrollments as EnrollmentCheck[];
+  // --- Filtering Logic ---
 
-      return list.some((enrollment) => {
-        if (enrollment.course) {
-          // If 'course' property exists, it's an Enrollment object
-          return enrollment.course === courseId;
-        } else {
-          // Otherwise, it's a Course object, so check _id
-          return enrollment._id === courseId;
-        }
-      });
-    }
-    return false;
+  // 1. Create a Set of IDs for courses the current user belongs to for efficient lookup.
+  // We handle the mixed types in the 'enrollments' state here.
+  const myCourseIds = new Set(
+    (enrollments as EnrollmentCheck[]).map((e) => e.course || e._id)
+  );
+
+  // 2. Determine which courses to display based on role.
+  // If Faculty (canEdit), only show courses they are associated with.
+  // If Student, show all visible courses.
+  const coursesToDisplay = canEdit
+    ? courses.filter((c) => myCourseIds.has(c._id))
+    : courses;
+
+  // Helper to check enrollment status for buttons (used by Students)
+  const isEnrolled = (courseId: string) => {
+    return myCourseIds.has(courseId);
   };
 
   const handleEnroll = async (event: React.MouseEvent, courseId: string) => {
@@ -146,7 +153,8 @@ export default function Dashboard() {
   };
 
   const handleNavigate = (event: React.MouseEvent, courseId: string) => {
-    if (currentUser?.role === "STUDENT" && !isEnrolled(courseId)) {
+    // Students can only navigate if enrolled. Faculty can always navigate to their visible courses.
+    if (isStudent && !isEnrolled(courseId)) {
       event.preventDefault();
       alert("You must be enrolled in this course to view it.");
     }
@@ -155,6 +163,8 @@ export default function Dashboard() {
   const onAddNewCourse = async () => {
     const newCourse = await client.createCourse(course);
     dispatch(addNewCourse(newCourse));
+    // Option: Auto-enroll faculty in course they just created if backend doesn't do it automatically
+    // dispatch(addEnrollment(newCourse));
   };
 
   const onDeleteCourse = async (courseId: string) => {
@@ -206,7 +216,8 @@ export default function Dashboard() {
       <h2 id="wd-dashboard-published">Published Courses</h2> <hr />
       <div id="wd-dashboard-courses">
         <Row xs={1} md={5} className="g-4">
-          {courses.map((course) => (
+          {/* Use coursesToDisplay instead of courses */}
+          {coursesToDisplay.map((course) => (
             <Col
               key={course._id}
               className="wd-dashboard-course"
@@ -235,27 +246,33 @@ export default function Dashboard() {
                       {course.description}
                     </CardText>
                     <div className="d-flex justify-content-between align-items-center">
+                      {/* Requirement 1: Only students see enroll buttons */}
                       <div>
-                        {isEnrolled(course._id) ? (
-                          <Button
-                            variant="danger"
-                            className="me-1"
-                            onClick={(e) => handleUnenroll(e, course._id)}
-                            size="sm"
-                          >
-                            Unenroll
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="success"
-                            className="me-1"
-                            onClick={(e) => handleEnroll(e, course._id)}
-                            size="sm"
-                          >
-                            Enroll
-                          </Button>
+                        {isStudent && (
+                          <>
+                            {isEnrolled(course._id) ? (
+                              <Button
+                                variant="danger"
+                                className="me-1"
+                                onClick={(e) => handleUnenroll(e, course._id)}
+                                size="sm"
+                              >
+                                Unenroll
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="success"
+                                className="me-1"
+                                onClick={(e) => handleEnroll(e, course._id)}
+                                size="sm"
+                              >
+                                Enroll
+                              </Button>
+                            )}
+                          </>
                         )}
                       </div>
+                      {/* Faculty see edit buttons */}
                       {canEdit && (
                         <div>
                           <Button
