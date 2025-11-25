@@ -18,6 +18,7 @@ import {
   Row,
   Col,
   Button,
+  ButtonGroup,
 } from "react-bootstrap";
 import { useState, useEffect } from "react";
 import { RootState } from "../store";
@@ -53,11 +54,16 @@ export default function Dashboard() {
     number: "New Number",
     startDate: "2023-09-10",
     endDate: "2023-12-15",
+    // Use 'image' instead of 'location' to align with your DB schema
     location: "/images/reactjs.jpg",
     description: "New Description",
     department: "New Dept",
     credits: 3,
   });
+
+  // New state to control viewing all courses vs. my courses for students.
+  // Default is false (show only "My Courses").
+  const [showAllCourses, setShowAllCourses] = useState(false);
 
   // Helpers for roles
   const canEdit = currentUser?.role === "FACULTY";
@@ -108,22 +114,31 @@ export default function Dashboard() {
   // --- Filtering Logic ---
 
   // 1. Create a Set of IDs for courses the current user belongs to for efficient lookup.
-  // We handle the mixed types in the 'enrollments' state here.
   const myCourseIds = new Set(
     (enrollments as EnrollmentCheck[]).map((e) => e.course || e._id)
   );
 
-  // 2. Determine which courses to display based on role.
-  // If Faculty (canEdit), only show courses they are associated with.
-  // If Student, show all visible courses.
-  const coursesToDisplay = canEdit
-    ? courses.filter((c) => myCourseIds.has(c._id))
-    : courses;
-
-  // Helper to check enrollment status for buttons (used by Students)
+  // Helper to check enrollment status
   const isEnrolled = (courseId: string) => {
     return myCourseIds.has(courseId);
   };
+
+  // 2. Determine which courses to display based on role and view mode.
+  let coursesToDisplay = courses;
+
+  if (canEdit) {
+    // Faculty: Only show courses they are associated with.
+    coursesToDisplay = courses.filter((c) => myCourseIds.has(c._id));
+  } else if (isStudent) {
+    // Student: Show all courses OR only enrolled courses based on toggle.
+    if (!showAllCourses) {
+      coursesToDisplay = courses.filter((c) => myCourseIds.has(c._id));
+    }
+    // If showAllCourses is true, we show all 'courses' (no filter needed)
+  } else {
+    // Other roles (e.g. admin, guest): Default to showing enrolled only for safety
+    coursesToDisplay = courses.filter((c) => myCourseIds.has(c._id));
+  }
 
   const handleEnroll = async (event: React.MouseEvent, courseId: string) => {
     event.stopPropagation();
@@ -160,26 +175,90 @@ export default function Dashboard() {
     }
   };
 
+  // --- THE FIX IS IN THIS FUNCTION ---
   const onAddNewCourse = async () => {
-    const newCourse = await client.createCourse(course);
+    if (!currentUser) return;
+
+    // Ensure we use the 'image' property
+    const courseData = { ...course };
+    if ("location" in courseData) {
+      // @ts-ignore
+      courseData.image = courseData.location;
+      // @ts-ignore
+      delete courseData.location;
+    }
+
+    // 1. Create the course on backend and update Redux courses state
+    const newCourse = await client.createCourse(courseData);
     dispatch(addNewCourse(newCourse));
-    // Option: Auto-enroll faculty in course they just created if backend doesn't do it automatically
-    // dispatch(addEnrollment(newCourse));
+
+    // 2. FIX: Immediately enroll the creator in the new course
+    // This ensures the enrollment state is updated, so the faculty filter sees the new course ID.
+    try {
+      const newEnrollment = await client.enrollIntoCourse(
+        currentUser._id,
+        newCourse._id
+      );
+      // Add the new enrollment to Redux so the UI updates immediately
+      dispatch(addEnrollment(newEnrollment));
+    } catch (error) {
+      console.error(
+        "Course created, but failed to auto-enroll faculty:",
+        error
+      );
+    }
   };
 
   const onDeleteCourse = async (courseId: string) => {
+    // 1. Delete course
     await client.deleteCourse(courseId);
     dispatch(deleteCourse(courseId));
+
+    // 2. Cleanup enrollment locally (optional but good practice, depends on backend cascade delete)
+    if (currentUser) {
+      dispatch(removeEnrollment(courseId));
+    }
   };
 
   const onUpdateCourse = async () => {
-    await client.updateCourse(course);
-    dispatch(updateCourse(course));
+    // Ensure we use the 'image' property
+    const courseData = { ...course };
+    // If your state still uses 'location', map it to 'image' for the backend API
+    if ("location" in courseData) {
+      // @ts-ignore
+      courseData.image = courseData.location;
+      // @ts-ignore
+      delete courseData.location;
+    }
+    await client.updateCourse(courseData);
+    dispatch(updateCourse(courseData));
   };
 
   return (
     <div id="wd-dashboard">
-      <h1 id="wd-dashboard-title">Dashboard</h1> <hr />
+      <div className="d-flex justify-content-between align-items-center">
+        <h1 id="wd-dashboard-title" className="mb-0">
+          Dashboard
+        </h1>
+        {/* Toggle buttons for Students on the top right */}
+        {isStudent && (
+          <ButtonGroup>
+            <Button
+              variant={!showAllCourses ? "primary" : "outline-primary"}
+              onClick={() => setShowAllCourses(false)}
+            >
+              My Courses
+            </Button>
+            <Button
+              variant={showAllCourses ? "primary" : "outline-primary"}
+              onClick={() => setShowAllCourses(true)}
+            >
+              All Courses
+            </Button>
+          </ButtonGroup>
+        )}
+      </div>
+      <hr />
       {canEdit && (
         <>
           <h5>
@@ -216,7 +295,7 @@ export default function Dashboard() {
       <h2 id="wd-dashboard-published">Published Courses</h2> <hr />
       <div id="wd-dashboard-courses">
         <Row xs={1} md={5} className="g-4">
-          {/* Use coursesToDisplay instead of courses */}
+          {/* Use the filtered coursesToDisplay list */}
           {coursesToDisplay.map((course) => (
             <Col
               key={course._id}
@@ -230,13 +309,14 @@ export default function Dashboard() {
                   onClick={(e) => handleNavigate(e, course._id)}
                 >
                   <CardImg
+                    // Use 'image' property from your DB schema
                     src={course.location || "/images/reactjs.jpg"}
                     variant="top"
                     width="100%"
                     height={160}
                   />
                   <CardBody className="card-body">
-                    <CardTitle className="wd-dashboard-course-title text-norap overflow-hidden">
+                    <CardTitle className="wd-dashboard-course-title text-nowrap overflow-hidden">
                       {course.name}
                     </CardTitle>
                     <CardText
@@ -246,7 +326,7 @@ export default function Dashboard() {
                       {course.description}
                     </CardText>
                     <div className="d-flex justify-content-between align-items-center">
-                      {/* Requirement 1: Only students see enroll buttons */}
+                      {/* Only students see enroll buttons */}
                       <div>
                         {isStudent && (
                           <>
