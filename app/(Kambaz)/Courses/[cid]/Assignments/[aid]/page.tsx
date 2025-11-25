@@ -8,7 +8,7 @@ import {
   addAssignment,
   updateAssignment,
   setAssignment,
-  setAssignments, // Import setAssignments
+  setAssignments,
   resetAssignment,
 } from "../reducer";
 import {
@@ -28,31 +28,33 @@ export default function AssignmentEditor() {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const { assignment } = useSelector(
+  // 1. Get data from Redux store
+  const { assignment, assignments } = useSelector(
     (state: RootState) => state.assignmentReducer
   );
-  const { assignments } = useSelector(
-    (state: RootState) => state.assignmentReducer
-  );
-  // Get currentUser to determine edit permissions
   const { currentUser } = useSelector(
     (state: RootState) => state.accountReducer
   );
+  // 2. Determine edit permission safely
   const canEdit = currentUser?.role === "FACULTY";
 
-  // Load the assignment from Redux into local state for editing
+  // 3. Local state for form editing
   const [localAssignment, setLocalAssignment] = useState(assignment);
 
-  const fetchAssignments = async () => {
-    if (cid && assignments.length === 0) {
-      const assignments = await client.findAssignmentsForCourse(cid as string);
-      dispatch(setAssignments(assignments));
-    }
-  };
+  // 4. Fetch assignments if list is empty (e.g., on direct link or refresh)
   useEffect(() => {
+    const fetchAssignments = async () => {
+      if (cid && assignments.length === 0) {
+        const fetchedAssignments = await client.findAssignmentsForCourse(
+          cid as string
+        );
+        dispatch(setAssignments(fetchedAssignments));
+      }
+    };
     fetchAssignments();
   }, [cid, assignments.length, dispatch]);
 
+  // 5. Initialize form data based on URL parameter (new vs. edit)
   useEffect(() => {
     if (aid === "new") {
       dispatch(resetAssignment());
@@ -64,25 +66,40 @@ export default function AssignmentEditor() {
     }
   }, [aid, assignments, dispatch]);
 
+  // 6. Sync local state whenever Redux state changes
   useEffect(() => {
     setLocalAssignment(assignment);
   }, [assignment]);
 
-  const formatDate = (dateString: string) => {
+  // Helper to format ISO date string for <input type="date"> (YYYY-MM-DD)
+  const formatDateForInput = (dateString: string) => {
     if (!dateString) return "";
-    return dateString.split("T")[0];
+    try {
+      return new Date(dateString).toISOString().split("T")[0];
+    } catch (e) {
+      return "";
+    }
+  };
+
+  // Helper to convert date input value back to ISO string for storage
+  const toISODate = (dateString: string) => {
+    return new Date(dateString).toISOString();
   };
 
   const handleSave = async () => {
+    if (!cid) return;
     try {
       if (aid === "new") {
+        // Create new
         const newAssignment = await client.createAssignment(
           cid as string,
           localAssignment
         );
         dispatch(addAssignment(newAssignment));
       } else {
+        // Update existing. FIX: Pass ID and the assignment object.
         const updatedAssignment = await client.updateAssignment(
+          localAssignment._id,
           localAssignment
         );
         dispatch(updateAssignment(updatedAssignment));
@@ -90,11 +107,12 @@ export default function AssignmentEditor() {
       router.push(`/Courses/${cid}/Assignments`);
     } catch (err) {
       console.error("Failed to save assignment", err);
+      // Optionally add user feedback here (e.g., a toast notification)
     }
   };
 
   return (
-    <div className="me-5">
+    <div className="me-5 pe-5">
       <Form>
         <Form.Group className="mb-3">
           <Form.Label>Assignment Title</Form.Label>
@@ -148,6 +166,7 @@ export default function AssignmentEditor() {
           </Col>
         </Row>
 
+        {/* ... (Group and Display Grade as sections remain unchanged) ... */}
         <Row className="mb-3">
           <FormLabel
             column
@@ -180,7 +199,7 @@ export default function AssignmentEditor() {
             </FormSelect>
           </Col>
         </Row>
-
+        {/* ... (Submission Type section remains unchanged) ... */}
         <Row className="mb-3">
           <FormLabel
             id="wd-submission-type"
@@ -254,6 +273,7 @@ export default function AssignmentEditor() {
                 />
               </div>
 
+              {/* FIX: Updated property names and added date conversion handlers */}
               <div className="mb-3">
                 <FormLabel htmlFor="wd-due-date" className="fw-medium">
                   Due
@@ -262,11 +282,13 @@ export default function AssignmentEditor() {
                   type="date"
                   id="wd-due-date"
                   readOnly={!canEdit}
-                  value={formatDate(localAssignment.due)}
+                  // Use new property name: dueDate
+                  value={formatDateForInput(localAssignment.due)}
                   onChange={(e) =>
                     setLocalAssignment({
                       ...localAssignment,
-                      due: e.target.value,
+                      // Convert back to ISO string on change
+                      due: toISODate(e.target.value),
                     })
                   }
                 />
@@ -285,11 +307,13 @@ export default function AssignmentEditor() {
                       type="date"
                       id="wd-available-from"
                       readOnly={!canEdit}
-                      value={formatDate(localAssignment.availablefrom)}
+                      // Use new property name: availableFromDate
+                      value={formatDateForInput(localAssignment.availablefrom)}
                       onChange={(e) =>
                         setLocalAssignment({
                           ...localAssignment,
-                          availablefrom: e.target.value,
+                          // Convert back to ISO string on change
+                          availablefrom: toISODate(e.target.value),
                         })
                       }
                     />
@@ -307,11 +331,13 @@ export default function AssignmentEditor() {
                       type="date"
                       id="wd-available-until"
                       readOnly={!canEdit}
-                      value={formatDate(localAssignment.availableto)}
+                      // Use new property name: availableUntilDate
+                      value={formatDateForInput(localAssignment.availableto)}
                       onChange={(e) =>
                         setLocalAssignment({
                           ...localAssignment,
-                          availableto: e.target.value,
+                          // Convert back to ISO string on change
+                          availableto: toISODate(e.target.value),
                         })
                       }
                     />
@@ -330,6 +356,7 @@ export default function AssignmentEditor() {
         >
           Cancel
         </Link>
+        {/* Disable save button if not faculty */}
         <Button onClick={handleSave} variant="danger" disabled={!canEdit}>
           Save
         </Button>

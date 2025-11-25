@@ -112,8 +112,9 @@ export const updateModule = async (courseId: string, module: Module) => {
 
 export const createAssignment = async (
   courseId: string,
-  assignment: Partial<Assignment> // Use Partial for creation
-): Promise<Assignment> => {
+  assignment: Assignment
+) => {
+  // Sends POST request with assignment data in the body
   const response = await axios.post(
     `${COURSES_API}/${courseId}/assignments`,
     assignment
@@ -122,6 +123,7 @@ export const createAssignment = async (
 };
 
 export const findAssignmentsForCourse = async (courseId: string) => {
+  // Sends GET request to /api/courses/:cid/assignments
   const response = await axios.get(`${COURSES_API}/${courseId}/assignments`);
   return response.data;
 };
@@ -131,6 +133,7 @@ export const findAssignmentsForCourse = async (courseId: string) => {
  * @param assignmentId The ID of the assignment to delete
  */
 export const deleteAssignment = async (assignmentId: string) => {
+  // Sends DELETE request to /api/assignments/:aid
   const response = await axios.delete(`${ASSIGNMENTS_API}/${assignmentId}`);
   return response.data;
 };
@@ -140,10 +143,12 @@ export const deleteAssignment = async (assignmentId: string) => {
  * @param assignment The assignment object with updates
  */
 export const updateAssignment = async (
+  assignmentId: string,
   assignment: Assignment
-): Promise<Assignment> => {
+) => {
+  // Sends PUT request with updated data in the body
   const response = await axios.put(
-    `${ASSIGNMENTS_API}/${assignment._id}`,
+    `${ASSIGNMENTS_API}/${assignmentId}`,
     assignment
   );
   return response.data;
