@@ -33,7 +33,7 @@ interface EnrollmentCheck {
   _id: string; // Present in Course objects
   course?: string; // Present in Enrollment objects (optional)
 }
-
+// new change
 export default function Dashboard() {
   const { currentUser } = useSelector(
     (state: RootState) => state.accountReducer
