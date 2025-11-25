@@ -48,13 +48,15 @@ export default function Dashboard() {
     (state: RootState) => state.coursesReducer
   );
   const dispatch = useDispatch();
+
+  // UPDATED: Initial state uses 'location'
   const [course, setCourse] = useState<Course>({
     _id: "0",
     name: "New Course",
     number: "New Number",
     startDate: "2023-09-10",
     endDate: "2023-12-15",
-    // Use 'image' instead of 'location' to align with your DB schema
+    // Corrected field name based on your schema decision
     location: "/images/reactjs.jpg",
     description: "New Description",
     department: "New Dept",
@@ -175,31 +177,21 @@ export default function Dashboard() {
     }
   };
 
-  // --- THE FIX IS IN THIS FUNCTION ---
+  // UPDATED: Simplified because we don't need to migrate data anymore
   const onAddNewCourse = async () => {
     if (!currentUser) return;
 
-    // Ensure we use the 'image' property
-    const courseData = { ...course };
-    if ("location" in courseData) {
-      // @ts-ignore
-      courseData.image = courseData.location;
-      // @ts-ignore
-      delete courseData.location;
-    }
-
     // 1. Create the course on backend and update Redux courses state
-    const newCourse = await client.createCourse(courseData);
+    // We just pass the course object directly now.
+    const newCourse = await client.createCourse(course);
     dispatch(addNewCourse(newCourse));
 
-    // 2. FIX: Immediately enroll the creator in the new course
-    // This ensures the enrollment state is updated, so the faculty filter sees the new course ID.
+    // 2. Immediately enroll the creator in the new course
     try {
       const newEnrollment = await client.enrollIntoCourse(
         currentUser._id,
         newCourse._id
       );
-      // Add the new enrollment to Redux so the UI updates immediately
       dispatch(addEnrollment(newEnrollment));
     } catch (error) {
       console.error(
@@ -210,28 +202,18 @@ export default function Dashboard() {
   };
 
   const onDeleteCourse = async (courseId: string) => {
-    // 1. Delete course
     await client.deleteCourse(courseId);
     dispatch(deleteCourse(courseId));
-
-    // 2. Cleanup enrollment locally (optional but good practice, depends on backend cascade delete)
     if (currentUser) {
       dispatch(removeEnrollment(courseId));
     }
   };
 
+  // UPDATED: Simplified because we don't need to migrate data anymore
   const onUpdateCourse = async () => {
-    // Ensure we use the 'image' property
-    const courseData = { ...course };
-    // If your state still uses 'location', map it to 'image' for the backend API
-    if ("location" in courseData) {
-      // @ts-ignore
-      courseData.image = courseData.location;
-      // @ts-ignore
-      delete courseData.location;
-    }
-    await client.updateCourse(courseData);
-    dispatch(updateCourse(courseData));
+    // We just pass the course object directly now.
+    await client.updateCourse(course);
+    dispatch(updateCourse(course));
   };
 
   return (
@@ -277,6 +259,15 @@ export default function Dashboard() {
             </button>
           </h5>
           <br />
+          {/* Add an input for Location if you want to edit it */}
+          {/*
+          <FormControl
+            value={course.location}
+            className="mb-2"
+            placeholder="Image Location Path"
+            onChange={(e) => setCourse({ ...course, location: e.target.value })}
+          />
+          */}
           <FormControl
             value={course.name}
             className="mb-2"
@@ -309,7 +300,7 @@ export default function Dashboard() {
                   onClick={(e) => handleNavigate(e, course._id)}
                 >
                   <CardImg
-                    // Use 'image' property from your DB schema
+                    // UPDATED: Use 'location' property from your DB schema
                     src={course.location || "/images/reactjs.jpg"}
                     variant="top"
                     width="100%"
