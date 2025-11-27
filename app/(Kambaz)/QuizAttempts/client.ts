@@ -8,7 +8,7 @@ export interface QuizAttempt {
   _id: string;
   quiz: string; // Quiz ID
   user: string; // User ID
-  answers: Record<string, any>; // Map of QuestionId -> Answer
+  answers: Record<string, string>; // Map of QuestionId -> Answer
   score: number;
   maxPoints: number;
   attemptDate: string;

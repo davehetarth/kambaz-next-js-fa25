@@ -44,11 +44,18 @@ export default function QuizResultsPage() {
 
         setQuiz(quizData);
         setAttempt(attemptData);
-      } catch (err: any) {
+      } catch (err) {
+        // Remove explicit type annotation to let TS infer.
+        // We cast inside the block to handle the 'unknown' nature of errors in strict mode.
         console.error("Failed to load results data", err);
-        setError(
-          err.response?.data || "Failed to load quiz results. Please try again."
-        );
+
+        let errorMessage = "Failed to load quiz results. Please try again.";
+        // Type assertion to access potential Axios error property safely
+        const errorWithResponse = err as { response?: { data?: string } };
+        if (errorWithResponse?.response?.data) {
+          errorMessage = errorWithResponse.response.data;
+        }
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -60,7 +67,10 @@ export default function QuizResultsPage() {
   }, [quizId, attemptId]);
 
   // --- HELPER: Determine if the student's answer for a question was correct ---
-  const isAnswerCorrect = (question: Question, studentAnswer: any): boolean => {
+  const isAnswerCorrect = (
+    question: Question,
+    studentAnswer: string
+  ): boolean => {
     if (!studentAnswer) return false;
 
     switch (question.questionType) {

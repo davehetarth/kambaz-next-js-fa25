@@ -4,8 +4,8 @@ import { Question, QuestionType, Choice } from "../../client";
 
 interface QuestionTakerProps {
   question: Question;
-  answer: any; // Could be string (T/F, Fill Blanks) or stringId (MC)
-  onAnswerChange: (answer: any) => void;
+  answer: string | undefined; // Could be string (T/F, Fill Blanks) or stringId (MC)
+  onAnswerChange: (answer: string) => void;
 }
 
 export default function QuestionTaker({

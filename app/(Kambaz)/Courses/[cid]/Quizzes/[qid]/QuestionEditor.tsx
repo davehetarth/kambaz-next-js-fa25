@@ -28,8 +28,12 @@ export default function QuestionEditorModal({
     return null;
   }
 
-  const handleUpdate = (field: keyof Question, value: any) => {
-    dispatch(updateQuestionInQuiz({ ...question, [field]: value }));
+  // Uses Indexed Access Type to ensure 'value' is a valid type existing within 'Question'
+  const handleUpdate = (
+    field: keyof Question,
+    value: Question[keyof Question]
+  ) => {
+    dispatch(updateQuestionInQuiz({ ...question, [field]: value } as Question));
   };
 
   // --- HELPER FUNCTIONS FOR MULTIPLE CHOICE ---

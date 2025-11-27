@@ -69,7 +69,7 @@ export interface Quiz {
 }
 export interface QuizAttemptSubmission {
   userId: string;
-  answers: Record<string, any>;
+  answers: Record<string, string>;
 }
 // --- Axios API Calls ---
 

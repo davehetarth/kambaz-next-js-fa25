@@ -735,7 +735,8 @@ export default function QuizEditor() {
             <ListGroup variant="flush">
               {quiz.questions.length === 0 && (
                 <ListGroup.Item className="text-muted text-center py-4">
-                  No questions added yet. Click "Add Question" to begin.
+                  No questions added yet. Click &quot;Add Question&quot; to
+                  begin.
                 </ListGroup.Item>
               )}
               {quiz.questions.map((question, index) => (

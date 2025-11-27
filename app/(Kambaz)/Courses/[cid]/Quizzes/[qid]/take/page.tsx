@@ -36,7 +36,7 @@ export default function TakeQuizPage() {
 
   // Placeholder state for storing student answers (will be used in Phase 6c/6d)
   // Mapping question ID string -> answer value (string or string[] for MC multiple select)
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>({});
 
   // 1. Fetch Quiz Data on Load
   useEffect(() => {
@@ -110,7 +110,7 @@ export default function TakeQuizPage() {
   };
 
   // HANDLER to update answers state
-  const handleAnswerChange = (questionId: string, answer: any) => {
+  const handleAnswerChange = (questionId: string, answer: string) => {
     setAnswers((prevAnswers) => ({
       ...prevAnswers,
       [questionId]: answer, // Update the answer for this specific question ID
@@ -223,7 +223,7 @@ export default function TakeQuizPage() {
                 <QuestionTaker
                   question={currentQuestion}
                   // Pass the current answer if it exists in the state object
-                  answer={answers[currentQuestion._id] || null}
+                  answer={answers[currentQuestion._id]}
                   // Pass the handler, currying it with the current question ID
                   onAnswerChange={(answer) =>
                     handleAnswerChange(currentQuestion._id, answer)
