@@ -2,9 +2,9 @@
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "../../../store"; // Adjust path to store if needed
-import { setQuizzes, deleteQuiz } from "./reducer"; // Adjust path if needed
-import * as client from "./client"; // Adjust path if needed
+import { RootState } from "../../../store";
+import { setQuizzes, deleteQuiz } from "./reducer";
+import * as client from "./client";
 import { ListGroup, Button, Badge } from "react-bootstrap";
 import {
   FaPlus,
@@ -52,7 +52,6 @@ export default function Quizzes() {
     }
   };
 
-  // Helper to format dates nicely
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     try {
@@ -62,9 +61,14 @@ export default function Quizzes() {
     }
   };
 
+  const sortedQuizzes = [...quizzes].sort((a, b) => {
+    const dateA = new Date(a.availableFromDate);
+    const dateB = new Date(b.availableFromDate);
+    return dateA.getTime() - dateB.getTime();
+  });
+
   return (
     <div id="wd-quizzes">
-      {/* Controls / Header */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2>Quizzes</h2>
         {canEdit && (
@@ -79,19 +83,17 @@ export default function Quizzes() {
       </div>
       <hr />
 
-      {/* Quiz List */}
       <ListGroup>
-        {quizzes.length === 0 && (
+        {sortedQuizzes.length === 0 && (
           <ListGroup.Item>No quizzes found.</ListGroup.Item>
         )}
-        {quizzes.map((quiz) => (
+        {sortedQuizzes.map((quiz) => (
           <ListGroup.Item
             key={quiz._id}
             className="d-flex justify-content-between align-items-center p-3"
           >
             <div className="flex-grow-1">
               <div className="d-flex align-items-center mb-1">
-                {/* Link to Editor for faculty, or quiz taker for students (TBD) */}
                 <Link
                   href={`/Courses/${courseId}/Quizzes/${quiz._id}`}
                   className="fw-bold text-dark text-decoration-none fs-5"
@@ -101,7 +103,6 @@ export default function Quizzes() {
               </div>
 
               <div className="text-muted small">
-                {/* Status Badge */}
                 {quiz.published ? (
                   <Badge bg="success" className="me-2">
                     <FaCheckCircle className="me-1" /> Published
@@ -112,7 +113,6 @@ export default function Quizzes() {
                   </Badge>
                 )}
 
-                {/* Details info */}
                 <span className="ms-2">
                   <b>Due:</b> {formatDate(quiz.due)} |
                   <b className="ms-2">Available:</b>{" "}
@@ -124,7 +124,6 @@ export default function Quizzes() {
               </div>
             </div>
 
-            {/* Action Buttons for Faculty */}
             {canEdit && (
               <div className="d-flex align-items-center">
                 <Button

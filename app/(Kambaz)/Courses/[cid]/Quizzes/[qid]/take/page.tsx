@@ -186,7 +186,7 @@ export default function TakeQuizPage() {
             {/* Timer placeholder */}
             {quiz.timeLimit > 0 && (
               <span className="text-muted small">
-                Time Remaining: [Timer placeholder]
+                {/* Time Remaining: [Timer placeholder] */}
               </span>
             )}
           </div>
@@ -198,12 +198,12 @@ export default function TakeQuizPage() {
           </div>
         </Container>
         {/* Progress Bar */}
-        <ProgressBar
+        {/* <ProgressBar
           now={progressPercentage}
           variant="primary"
           style={{ height: "5px", marginTop: "15px" }}
           animated={false}
-        />
+        /> */}
       </div>
 
       <Container>
@@ -266,8 +266,6 @@ export default function TakeQuizPage() {
               )}
             </div>
           </Col>
-          {/* Optional Sidebar for question navigator (future enhancement) */}
-          {/* <Col md={3} lg={4} className="d-none d-md-block"> ...Sidebar... </Col> */}
         </Row>
       </Container>
     </div>

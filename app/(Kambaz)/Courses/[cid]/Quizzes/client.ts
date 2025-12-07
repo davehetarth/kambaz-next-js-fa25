@@ -4,8 +4,6 @@ const HTTP_SERVER = process.env.NEXT_PUBLIC_HTTP_SERVER;
 const COURSES_API = `${HTTP_SERVER}/api/courses`;
 const QUIZZES_API = `${HTTP_SERVER}/api/quizzes`;
 
-// --- TypeScript Interfaces (Matching Mongoose Schema) ---
-
 export enum QuizType {
   GRADED_QUIZ = "GRADED_QUIZ",
   PRACTICE_QUIZ = "PRACTICE_QUIZ",

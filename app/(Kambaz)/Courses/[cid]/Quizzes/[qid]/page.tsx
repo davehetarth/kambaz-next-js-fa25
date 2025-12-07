@@ -56,11 +56,9 @@ export default function QuizEditor() {
   const [showQModal, setShowQModal] = useState(false);
   const [editingQId, setEditingQId] = useState<string | null>(null);
 
-  // State for student view attempts
   const [studentAttempts, setStudentAttempts] = useState<QuizAttempt[]>([]);
   const [loadingAttempts, setLoadingAttempts] = useState(false);
 
-  // Fetch Quiz Data (for both roles)
   useEffect(() => {
     const fetchOrResetQuiz = async () => {
       if (isNew) {
@@ -77,7 +75,6 @@ export default function QuizEditor() {
     fetchOrResetQuiz();
   }, [quizId, dispatch, isNew]);
 
-  // Fetch Student Attempts (for students only)
   useEffect(() => {
     const fetchAttempts = async () => {
       if (currentUser && !canEdit && !isNew && quizId) {
@@ -100,7 +97,7 @@ export default function QuizEditor() {
 
   const handleSave = async () => {
     if (!canEdit) return;
-    // Calculate total points from questions
+
     const totalPoints = quiz.questions.reduce((sum, q) => sum + q.points, 0);
     const quizToSave = { ...quiz, course: courseId, points: totalPoints };
 
@@ -122,7 +119,6 @@ export default function QuizEditor() {
   const formatDateForInput = (dateString: string) =>
     dateString ? dateString.split("T")[0] : "";
 
-  // Question Handlers
   const handleAddQuestion = () => {
     dispatch(addQuestionToQuiz());
   };
@@ -138,11 +134,7 @@ export default function QuizEditor() {
     setShowQModal(true);
   };
 
-  // ==================================================================================
-  // STUDENT VIEW RENDER
-  // ==================================================================================
   if (!canEdit && !isNew) {
-    // Helper to format display dates
     const formatDisplayDate = (dateString: string) => {
       if (!dateString) return "Not set";
       try {
@@ -160,19 +152,18 @@ export default function QuizEditor() {
       );
     }
 
-    // CALCULATE STATUS
     const attemptsTaken = studentAttempts.length;
-    // Allowed attempts: if multiple is false, it's 1. If true, use the number set.
+
     const attemptsAllowed = !quiz.multipleAttempts ? 1 : quiz.howManyAttempts;
     const hasAttemptsRemaining = attemptsTaken < attemptsAllowed;
     const latestAttempt =
-      studentAttempts.length > 0 ? studentAttempts[0] : null; // DAO sorts newest first
+      studentAttempts.length > 0 ? studentAttempts[0] : null;
 
     return (
       <div id="wd-quiz-details-student" className="container mt-4">
         <div className="d-flex align-items-center justify-content-between">
           <h2 className="mb-0">{quiz.title}</h2>
-          {/* SHOW LATEST SCORE IF AVAILABLE */}
+
           {latestAttempt && (
             <Badge
               bg={
@@ -188,7 +179,6 @@ export default function QuizEditor() {
         </div>
         <hr />
 
-        {/* Quiz Instructions/Description */}
         {quiz.description && (
           <div className="mb-4 p-3 bg-light rounded border">
             <h5>Instructions</h5>
@@ -198,7 +188,6 @@ export default function QuizEditor() {
           </div>
         )}
 
-        {/* Quiz Details Card */}
         <Row className="justify-content-center font-monospace">
           <Col md={8}>
             <div className="border rounded p-4 mb-4 bg-white shadow-sm">
@@ -234,7 +223,6 @@ export default function QuizEditor() {
                 </Col>
               </Row>
 
-              {/* UPDATED ATTEMPTS ROW */}
               <Row className="mb-2">
                 <Col xs={6} className="text-muted text-end fw-bold">
                   Attempts
@@ -278,9 +266,7 @@ export default function QuizEditor() {
               </Row>
             </div>
 
-            {/* UPDATED ACTION BUTTONS AREA */}
             <div className="text-center d-flex justify-content-center gap-3">
-              {/* View Results Button */}
               {latestAttempt && (
                 <Button
                   size="lg"
@@ -296,7 +282,6 @@ export default function QuizEditor() {
                 </Button>
               )}
 
-              {/* Begin Quiz Button with Logic */}
               {quiz.published ? (
                 <Button
                   size="lg"
@@ -331,9 +316,7 @@ export default function QuizEditor() {
     );
   }
 
-  // ==================================================================================
-  // FACULTY EDITOR RENDER
-  // ==================================================================================
+  //Faculty editor
   return (
     <div id="wd-quiz-editor">
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -718,7 +701,6 @@ export default function QuizEditor() {
           </Form>
         </Tab>
 
-        {/* --- QUESTIONS TAB --- */}
         <Tab
           eventKey="questions"
           title={`Questions (${quiz.questions.length})`}
