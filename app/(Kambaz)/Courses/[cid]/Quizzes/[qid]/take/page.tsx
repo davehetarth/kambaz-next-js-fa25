@@ -81,7 +81,7 @@ export default function TakeQuizPage() {
     const confirm = window.confirm(
       "Are you ready to submit your quiz? You will not be able to change your answers."
     );
-
+    // new change
     if (confirm) {
       try {
         setSubmitting(true); // Show loading state
