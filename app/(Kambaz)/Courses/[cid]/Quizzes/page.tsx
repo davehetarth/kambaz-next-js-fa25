@@ -76,6 +76,7 @@ export default function Quizzes() {
             variant="danger"
             size="lg"
             onClick={() => router.push(`/Courses/${courseId}/Quizzes/new`)}
+            className=""
           >
             <FaPlus className="me-2" /> Quiz
           </Button>
@@ -83,11 +84,11 @@ export default function Quizzes() {
       </div>
       <hr />
 
-      <ListGroup>
-        {sortedQuizzes.length === 0 && (
+      <ListGroup className="me-3">
+        {quizzes.length === 0 && (
           <ListGroup.Item>No quizzes found.</ListGroup.Item>
         )}
-        {sortedQuizzes.map((quiz) => (
+        {quizzes.map((quiz) => (
           <ListGroup.Item
             key={quiz._id}
             className="d-flex justify-content-between align-items-center p-3"
